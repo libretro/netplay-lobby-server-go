@@ -3,7 +3,7 @@ package domain
 import (
 	"time"
 
-	"github.com/libretro/netplay-lobby-go-server/model"
+	"github.com/libretro/netplay-lobby-server-go/model"
 )
 
 // SessionDomain abrsracts the domain logic for netplay session handling.

@@ -1,4 +1,4 @@
-module github.com/libretro/netplay-lobby-go-server
+module github.com/libretro/netplay-lobby-server-go
 
 go 1.13
 

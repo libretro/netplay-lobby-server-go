@@ -1,4 +1,4 @@
-# netplay-lobby-go-server
+# netplay-lobby-server-go
 
 
 
