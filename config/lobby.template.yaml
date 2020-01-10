@@ -1,0 +1,15 @@
+server:
+  address: 0.0.0.0/32
+  port: 7777
+
+cores:
+  - bsnes.*
+  - snes.*
+
+blacklist:
+  nickname:
+    - someRE1.*
+    - someRE2.*
+  ip:
+   - 1.1.1.1
+   - 8.8.8.8
