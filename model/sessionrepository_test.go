@@ -79,3 +79,5 @@ func TestSessionRepositoryGetAll(t *testing.T) {
 		assert.Less(t, sessions[0].Username, sessions[1].Username, "sessions are not ordered by username")
 	}
 }
+
+// TODO add tests for Update, Touch and PurgeOld
