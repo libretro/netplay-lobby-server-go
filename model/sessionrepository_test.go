@@ -84,12 +84,20 @@ func TestSessionRepositoryGetAll(t *testing.T) {
 	require.NoError(t, err, "Can't create session")
 
 	deadline := time.Now().Add(-1 * time.Minute)
-	sessions, err := sessionRepository.GetAllValid(deadline)
-	require.NoError(t, err, "Can't get all valid sessions")
+	sessions, err := sessionRepository.GetAll(&deadline)
+	require.NoError(t, err, "Can't get all sessions with deadline")
 	
 	require.NotNil(t, sessions)
-	require.Equal(t, len(sessions), 2, "Query seems to include non valid entries.")
+	require.Equal(t, 2, len(sessions), "Query seems to include non valid entries.")
 	assert.Less(t, sessions[0].Username, sessions[1].Username, "Sessions are not ordered by username")
+
+	sessions, err = sessionRepository.GetAll(nil)
+	require.NoError(t, err, "Can't get all sessions without deadline")
+	
+	require.NotNil(t, sessions)
+	require.Equal(t, 3, len(sessions), "Query seems to not include invalid entries.")
+	assert.Less(t, sessions[0].Username, sessions[1].Username, "Sessions are not ordered by username")
+	assert.Less(t, sessions[1].Username, sessions[2].Username, "Sessions are not ordered by username")
 }
 
 func TestSessionRepositoryUpdate(t *testing.T) {
@@ -142,4 +150,35 @@ func TestSessionRepositoryTouch(t *testing.T) {
 	assert.Equal(t, oldSession.ContentHash, newSession.ContentHash)
 }
 
-// TODO add tests for PurgeOld
+func TestSessionRepositoryPurgeOld(t *testing.T) {
+	sessionRepository := setupSessionRepository(t)
+	session := testSession
+	
+	session.CalculateID()
+	session.CalculateContentHash()
+	err := sessionRepository.Create(&session)
+	require.NoError(t, err, "Can't create session")
+
+	session.Username = "aladin"
+	session.CalculateID()
+	session.CalculateContentHash()
+	err = sessionRepository.Create(&session)
+	require.NoError(t, err, "Can't create session")
+
+	session.Username = "invalid"
+	session.UpdatedAt = time.Now().Add(-2 * time.Minute)
+	session.CalculateID()
+	session.CalculateContentHash()
+	err = sessionRepository.Create(&session)
+	require.NoError(t, err, "Can't create session")
+
+	deadline := time.Now().Add(-1 * time.Minute)
+	err = sessionRepository.PurgeOld(deadline)
+	require.NoError(t, err, "Can't purge old sessions")
+
+	sessions, err := sessionRepository.GetAll(nil)
+	require.NoError(t, err, "Can't get all sessions")
+	
+	require.NotNil(t, sessions)
+	require.Equal(t, len(sessions), 2, "Query seems to include non valid entries.")
+}

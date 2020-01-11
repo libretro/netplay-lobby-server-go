@@ -17,11 +17,15 @@ func NewSessionRepository(db *gorm.DB) *SessionRepository {
 	return &SessionRepository{db}
 }
 
-// GetAllValid returns all sessions currently beeing hosted that are not older than the provided deadline.
-func (r *SessionRepository) GetAllValid(deadline time.Time) ([]Session, error) {
+// GetAll returns all sessions currently beeing hosted. User can include a deadline to filter out sessions based on UpdatedAt timestamp.
+func (r *SessionRepository) GetAll(deadline *time.Time) ([]Session, error) {
 	var s []Session
-	if err := r.db.Where("updated_at > ?", deadline).Order("username").Find(&s).Error; err != nil {
-		return nil, fmt.Errorf("can't query for all sessions: %w", err)
+	if deadline == nil {
+		if err := r.db.Order("username").Find(&s).Error; err != nil {
+			return nil, fmt.Errorf("can't query for all sessions: %w", err)
+		}
+	} else if err := r.db.Where("updated_at > ?", deadline).Order("username").Find(&s).Error; err != nil {
+		return nil, fmt.Errorf("can't query for all sessions with deadline %s: %w", deadline, err)
 	}
 	return s, nil
 }
