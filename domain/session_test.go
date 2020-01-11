@@ -49,11 +49,11 @@ func TestSessionDomainPurgeOld(t *testing.T) {
 	repoMock := SessionRepositoryMock{}
 	sessionDomain := NewSessionDomain(&repoMock)
 
-	// We test if the deadline was 60 seconds
+	// Test the deadline duration
 	repoMock.On("PurgeOld", mock.MatchedBy(
 		func(d time.Time) bool {
-			before := time.Now().Add(-59 * time.Second)
-			after := time.Now().Add(-61 * time.Second)
+			before := time.Now().Add(-(SessionDeadline-1) * time.Second)
+			after := time.Now().Add(-(SessionDeadline+1) * time.Second)
         	return d.Before(before) && d.After(after)
 		})).Return(nil)
 
@@ -65,11 +65,11 @@ func TestSessionDomainList(t *testing.T) {
 	repoMock := SessionRepositoryMock{}
 	sessionDomain := NewSessionDomain(&repoMock)
 
-	// We test if the deadline was 60 seconds
+	// Test the deadline duration
 	repoMock.On("GetAll", mock.MatchedBy(
 		func(d time.Time) bool {
-			before := time.Now().Add(-59 * time.Second)
-			after := time.Now().Add(-61 * time.Second)
+			before := time.Now().Add(-(SessionDeadline-1) * time.Second)
+			after := time.Now().Add(-(SessionDeadline+1) * time.Second)
         	return d.Before(before) && d.After(after)
 		})).Return(make([]entity.Session, 3), nil)
 
