@@ -1,4 +1,4 @@
-package model
+package repository
 
 import (
 	"testing"
@@ -9,14 +9,39 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/libretro/netplay-lobby-server-go/model/entity"
 )
+
+var testSession = entity.Session{
+	ID:                  "",
+	Username:            "zelda",
+	Country:             "EN",
+	GameName:            "supergame",
+	GameCRC:             "FFFFFFFF",
+	CoreName:            "unes",
+	CoreVersion:         "0.2.1",
+	SubsystemName:       "subsub",
+	RetroArchVersion:    "1.1.1",
+	Frontend:            "retro",
+	IP:                  net.ParseIP("127.0.0.1"),
+	Port:                55355,
+	MitmIP:              net.ParseIP("0.0.0.0"),
+	MitmPort:            0,
+	HostMethod:          entity.HostMethodUPNP,
+	HasPassword:         false,
+	HasSpectatePassword: false,
+	CreatedAt:           time.Now(),
+	UpdatedAt:           time.Now(),
+	ContentHash:         "",
+}
 
 func setupSessionRepository(t *testing.T) *SessionRepository {
 	db, err := gorm.Open("sqlite3", ":memory:")
 	if err != nil {
 		t.Fatalf("Can't open sqlite3 db: %v", err)
 	}
-	db.AutoMigrate(Session{})
+	db.AutoMigrate(entity.Session{})
 
 	return NewSessionRepository(db)
 }

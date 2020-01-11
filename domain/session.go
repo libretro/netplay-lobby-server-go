@@ -3,21 +3,21 @@ package domain
 import (
 	"time"
 
-	"github.com/libretro/netplay-lobby-server-go/model"
+	"github.com/libretro/netplay-lobby-server-go/model/entity"
 )
 
 // SessionDomain abrsracts the domain logic for netplay session handling.
 type SessionDomain struct {
-	sessionRepo *model.SessionRepository
+	sessionRepo SessionRepository
 }
 
 // NewSessionDomain returns an initalized SessionDomain struct.
-func NewSessionDomain(sessionRepo *model.SessionRepository) *SessionDomain {
+func NewSessionDomain(sessionRepo SessionRepository) *SessionDomain {
 	return &SessionDomain{sessionRepo}
 }
 
-// AddOrUpdateSession adds or updates a session, based on the incomming session information.
-func (d *SessionDomain) AddOrUpdateSession(s *model.Session) error {
+// AddOrUpdate adds or updates a session, based on the incomming session information.
+func (d *SessionDomain) AddOrUpdate(s *entity.Session) error {
 	// Parse POST body
 
 	// Look if the CalculateHashID() is inside the database to see, if this is an ADD or UPDATE.
@@ -35,16 +35,16 @@ func (d *SessionDomain) AddOrUpdateSession(s *model.Session) error {
 	return nil
 }
 
-// PurgeOldSessions removes all sessions that have not been updated for longer than 45 seconds.
-func (d *SessionDomain) PurgeOldSessions(duration time.Duration) error {
+// PurgeOld removes all sessions that have not been updated for longer than 45 seconds.
+func (d *SessionDomain) PurgeOld() error {
 	if err := d.sessionRepo.PurgeOld(getDeadline()); err != nil {
 		return err
 	}
 	return nil
 }
 
-// ListSessions returns a list of all sessions that are currently beeing hosted
-func (d *SessionDomain) ListSessions() ([]model.Session, error) {
+// List returns a list of all sessions that are currently beeing hosted
+func (d *SessionDomain) List() ([]entity.Session, error) {
 	sessions, err := d.sessionRepo.GetAll(getDeadline())
 	if err != nil {
 		return nil, err
@@ -53,5 +53,15 @@ func (d *SessionDomain) ListSessions() ([]model.Session, error) {
 }
 
 func getDeadline() time.Time {
-	return time.Now().Add(-45 * time.Second)
+	return time.Now().Add(-60 * time.Second)
+}
+
+// SessionRepository interface to decouple the domain logic from the repository code.
+type SessionRepository interface {
+	Create(s *entity.Session) error
+	GetByID(id string) (*entity.Session, error)
+	GetAll(deadline time.Time) ([]entity.Session, error)
+	Update(s *entity.Session) error
+	Touch(id string) error
+	PurgeOld(deadline time.Time) error
 }

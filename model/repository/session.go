@@ -1,10 +1,12 @@
-package model
+package repository
 
 import (
 	"fmt"
 	"time"
 
 	"github.com/jinzhu/gorm"
+
+	"github.com/libretro/netplay-lobby-server-go/model/entity"
 )
 
 // SessionRepository abstracts the database operation for Sessions.
@@ -18,8 +20,8 @@ func NewSessionRepository(db *gorm.DB) *SessionRepository {
 }
 
 // GetAll returns all sessions currently beeing hosted. Deadline is used to filter our old sessions. Deadline of zero value deactivates this filter.
-func (r *SessionRepository) GetAll(deadline time.Time) ([]Session, error) {
-	var s []Session
+func (r *SessionRepository) GetAll(deadline time.Time) ([]entity.Session, error) {
+	var s []entity.Session
 	if deadline.IsZero() {
 		if err := r.db.Order("username").Find(&s).Error; err != nil {
 			return nil, fmt.Errorf("can't query for all sessions: %w", err)
@@ -31,8 +33,8 @@ func (r *SessionRepository) GetAll(deadline time.Time) ([]Session, error) {
 }
 
 // GetByID returns the session with the given ID. Returns nil if session can't be found.
-func (r *SessionRepository) GetByID(id string) (*Session, error) {
-	var s Session
+func (r *SessionRepository) GetByID(id string) (*entity.Session, error) {
+	var s entity.Session
 	if err := r.db.Where("id = ?", id).First(&s).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
@@ -43,7 +45,7 @@ func (r *SessionRepository) GetByID(id string) (*Session, error) {
 }
 
 // Create creates a new session.
-func (r *SessionRepository) Create(s *Session) error {
+func (r *SessionRepository) Create(s *entity.Session) error {
 	if err := r.db.Create(s).Error; err != nil {
 		return fmt.Errorf("can't create session %v: %w", s, err)
 	}
@@ -51,7 +53,7 @@ func (r *SessionRepository) Create(s *Session) error {
 }
 
 // Update updates a session.
-func (r *SessionRepository) Update(s *Session) error {
+func (r *SessionRepository) Update(s *entity.Session) error {
 	if err := r.db.Model(&s).Updates(&s).Error; err != nil {
 		return fmt.Errorf("can't update session %v: %w", s, err)
 	}
@@ -60,7 +62,7 @@ func (r *SessionRepository) Update(s *Session) error {
 
 // Touch updates the UpdatedAt timestamp.
 func (r *SessionRepository) Touch(id string) error {
-	if err := r.db.Model(&Session{}).Update("id", id).Error; err != nil {
+	if err := r.db.Model(&entity.Session{}).Update("id", id).Error; err != nil {
 		return fmt.Errorf("can't touch session with ID %s: %w", id, err)
 	}
 	return nil
@@ -68,7 +70,7 @@ func (r *SessionRepository) Touch(id string) error {
 
 // PurgeOld purges all sessions older than the given timestamp.
 func (r *SessionRepository) PurgeOld(deadline time.Time) error {
-	if err := r.db.Where("updated_at < ?", deadline).Delete(Session{}).Error; err != nil {
+	if err := r.db.Where("updated_at < ?", deadline).Delete(entity.Session{}).Error; err != nil {
 		return fmt.Errorf("can't delete old sessions: %w", err)
 	}
 	return nil

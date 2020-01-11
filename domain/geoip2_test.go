@@ -1,6 +1,5 @@
 package domain
 
-
 import (
 	"net"
 	"testing"
