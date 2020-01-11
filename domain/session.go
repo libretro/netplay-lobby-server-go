@@ -50,7 +50,7 @@ func (d *SessionDomain) Add(session *entity.Session) (*entity.Session, error) {
 	// Decide if this is an CREATE, UPDATE or TOUCH operation
 	session.CalculateID()
 	if savedSession, err = d.sessionRepo.GetByID(session.ID); err != nil {
-		return nil, fmt.Errorf("can't get saved session: %w", err)
+		return nil, fmt.Errorf("Can't get saved session: %w", err)
 	}
 	if savedSession != nil {
 		requestType = SessionTouch
@@ -71,15 +71,15 @@ func (d *SessionDomain) Add(session *entity.Session) (*entity.Session, error) {
 	switch (requestType) {
 	case SessionCreate:
 		if err = d.sessionRepo.Create(session); err != nil {
-			return nil, fmt.Errorf("can't create new session: %w", err)
+			return nil, fmt.Errorf("Can't create new session: %w", err)
 		}
 	case SessionUpdate:
 		if err = d.sessionRepo.Update(session); err != nil {
-			return nil, fmt.Errorf("can't update old session: %w", err)
+			return nil, fmt.Errorf("Can't update old session: %w", err)
 		}
 	case SessionTouch:
 		if err = d.sessionRepo.Touch(session.ID); err != nil {
-			return nil, fmt.Errorf("can't touch old session: %w", err)
+			return nil, fmt.Errorf("Can't touch old session: %w", err)
 		}
 	}
 
