@@ -41,13 +41,17 @@ func TestSessionRepositoryCreateIPNotNull(t *testing.T) {
 	session.CalculateContentHash()
 	err := sessionRepository.Create(&session)
 	require.Error(t, err, "Should not be able to create nil value for IP")
+}
 
-	session.IP = net.ParseIP("0.0.0.0")
+func TestSessionRepositoryCreateMITMNull(t *testing.T) {
+	sessionRepository := setupSessionRepository(t)
+	session := testSession
+
 	session.MitmIP = nil
 	session.CalculateID()
 	session.CalculateContentHash()
-	err = sessionRepository.Create(&session)
-	require.Error(t, err, "Should not be able to create nil value for MITM IP")
+	err := sessionRepository.Create(&session)
+	require.NoError(t, err, "Should be able to create nil value for MITM IP")
 }
 
 func TestSessionRepositoryGetByID(t *testing.T) {

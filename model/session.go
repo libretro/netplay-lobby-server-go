@@ -36,7 +36,7 @@ type Session struct {
 	Frontend            string     `json:"frontend"`
 	IP                  net.IP     `json:"ip" gorm:"not null"`
 	Port                uint16     `json:"port"`
-	MitmIP              net.IP     `json:"mitm_ip" gorm:"not null"`
+	MitmIP              net.IP     `json:"mitm_ip"`
 	MitmPort            uint16     `json:"mitm_port"`
 	HostMethod          HostMethod `json:"host_method"`
 	HasPassword         bool       `json:"has_password"`
