@@ -31,6 +31,25 @@ func TestSessionRepositoryCreate(t *testing.T) {
 	require.NoError(t, err, "Can't create session")
 }
 
+func TestSessionRepositoryCreateIPNotNull(t *testing.T) {
+	sessionRepository := setupSessionRepository(t)
+	session := testSession
+
+	session.IP = nil
+	session.MitmIP = net.ParseIP("0.0.0.0")
+	session.CalculateID()
+	session.CalculateContentHash()
+	err := sessionRepository.Create(&session)
+	require.Error(t, err, "Should not be able to create nil value for IP")
+
+	session.IP = net.ParseIP("0.0.0.0")
+	session.MitmIP = nil
+	session.CalculateID()
+	session.CalculateContentHash()
+	err = sessionRepository.Create(&session)
+	require.Error(t, err, "Should not be able to create nil value for MITM IP")
+}
+
 func TestSessionRepositoryGetByID(t *testing.T) {
 	sessionRepository := setupSessionRepository(t)
 	session := testSession
@@ -110,7 +129,7 @@ func TestSessionRepositoryUpdate(t *testing.T) {
 	require.NoError(t, err, "Can't create session")
 
 	newIP := net.ParseIP("83.12.41.222")
-	session.MitmIP = &newIP
+	session.MitmIP = newIP
 
 	session.CalculateContentHash()
 	err = sessionRepository.Update(&session)
@@ -120,7 +139,7 @@ func TestSessionRepositoryUpdate(t *testing.T) {
 	require.NoError(t, err, "Can't get session by ID")
 
 	require.NotNil(t, newSession)
-	assert.Equal(t, *newSession.MitmIP, newIP)
+	assert.Equal(t, newSession.MitmIP, newIP)
 }
 
 func TestSessionRepositoryTouch(t *testing.T) {

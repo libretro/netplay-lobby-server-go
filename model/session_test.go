@@ -21,7 +21,7 @@ var testSession = Session{
 	Frontend:            "retro",
 	IP:                  net.ParseIP("127.0.0.1"),
 	Port:                55355,
-	MitmIP:              nil,
+	MitmIP:              net.ParseIP("0.0.0.0"),
 	MitmPort:            0,
 	HostMethod:          HostMethodUPNP,
 	HasPassword:         false,
@@ -94,7 +94,7 @@ func TestContentHashCreationForTestSession(t *testing.T) {
 	session.CalculateContentHash()
 
 	assert.NotEqual(t, "d89f176c5afab7c6604184c30dbb51b9791940f9a0e9bfd21e0c9f86520fd958794aa335c452a8dce6d89e07a4c1cfbebe041d61cfc6962a0d54f79e8b65c6d5", session.ContentHash)
-	assert.Equal(t, "5a429c6f4fa0d1c7a253d896eec18c868eb00713b4d50f9b247da01a900a13eaa875237df3b5f43b7da56706d9865b4437d17cd3a55be0eff2b377b645a93fda", session.ContentHash)
+	assert.Equal(t, "179ca1a118b42f910f782a001c39824338bc7506bb11c6a956057921e1f84605afe178bdf36aca5a51125942ca612e1e9af6e5361f9a1a9a826a48f0d5d74aa6", session.ContentHash)
 }
 
 func TestIDDoesNotChangeContentHash(t *testing.T) {

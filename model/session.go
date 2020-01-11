@@ -34,9 +34,9 @@ type Session struct {
 	SubsystemName       string     `json:"subsystem_name"`
 	RetroArchVersion    string     `json:"retroarch_version"`
 	Frontend            string     `json:"frontend"`
-	IP                  net.IP     `json:"ip"`
+	IP                  net.IP     `json:"ip" gorm:"not null"`
 	Port                uint16     `json:"port"`
-	MitmIP              *net.IP    `json:"mitm_ip"`
+	MitmIP              net.IP     `json:"mitm_ip" gorm:"not null"`
 	MitmPort            uint16     `json:"mitm_port"`
 	HostMethod          HostMethod `json:"host_method"`
 	HasPassword         bool       `json:"has_password"`
@@ -80,9 +80,7 @@ func (s *Session) CalculateContentHash() {
 	shake.Write([]byte(s.Frontend))
 	shake.Write([]byte(s.IP))
 	shake.Write([]byte(strconv.FormatUint(uint64(s.Port), 10)))
-	if s.MitmIP != nil {
-		shake.Write([]byte(*s.MitmIP))
-	}
+	shake.Write([]byte(s.MitmIP))
 	shake.Write([]byte(strconv.FormatUint(uint64(s.MitmPort), 10)))
 	shake.Write([]byte(strconv.FormatBool(s.HasPassword)))
 	shake.Write([]byte(strconv.FormatBool(s.HasSpectatePassword)))
