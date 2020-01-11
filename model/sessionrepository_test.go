@@ -84,14 +84,14 @@ func TestSessionRepositoryGetAll(t *testing.T) {
 	require.NoError(t, err, "Can't create session")
 
 	deadline := time.Now().Add(-1 * time.Minute)
-	sessions, err := sessionRepository.GetAll(&deadline)
+	sessions, err := sessionRepository.GetAll(deadline)
 	require.NoError(t, err, "Can't get all sessions with deadline")
 	
 	require.NotNil(t, sessions)
 	require.Equal(t, 2, len(sessions), "Query seems to include non valid entries.")
 	assert.Less(t, sessions[0].Username, sessions[1].Username, "Sessions are not ordered by username")
 
-	sessions, err = sessionRepository.GetAll(nil)
+	sessions, err = sessionRepository.GetAll(time.Time{})
 	require.NoError(t, err, "Can't get all sessions without deadline")
 	
 	require.NotNil(t, sessions)
@@ -176,7 +176,7 @@ func TestSessionRepositoryPurgeOld(t *testing.T) {
 	err = sessionRepository.PurgeOld(deadline)
 	require.NoError(t, err, "Can't purge old sessions")
 
-	sessions, err := sessionRepository.GetAll(nil)
+	sessions, err := sessionRepository.GetAll(time.Time{})
 	require.NoError(t, err, "Can't get all sessions")
 	
 	require.NotNil(t, sessions)

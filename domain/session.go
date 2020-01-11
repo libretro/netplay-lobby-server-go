@@ -45,8 +45,7 @@ func (d *SessionDomain) PurgeOldSessions(duration time.Duration) error {
 
 // ListSessions returns a list of all sessions that are currently beeing hosted
 func (d *SessionDomain) ListSessions() ([]model.Session, error) {
-	deadline := getDeadline()
-	sessions, err := d.sessionRepo.GetAll(&deadline)
+	sessions, err := d.sessionRepo.GetAll(getDeadline())
 	if err != nil {
 		return nil, err
 	}

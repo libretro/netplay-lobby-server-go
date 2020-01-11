@@ -17,10 +17,10 @@ func NewSessionRepository(db *gorm.DB) *SessionRepository {
 	return &SessionRepository{db}
 }
 
-// GetAll returns all sessions currently beeing hosted. User can include a deadline to filter out sessions based on UpdatedAt timestamp.
-func (r *SessionRepository) GetAll(deadline *time.Time) ([]Session, error) {
+// GetAll returns all sessions currently beeing hosted. Deadline is used to filter our old sessions. Deadline of zero value deactivates this filter.
+func (r *SessionRepository) GetAll(deadline time.Time) ([]Session, error) {
 	var s []Session
-	if deadline == nil {
+	if deadline.IsZero() {
 		if err := r.db.Order("username").Find(&s).Error; err != nil {
 			return nil, fmt.Errorf("can't query for all sessions: %w", err)
 		}
