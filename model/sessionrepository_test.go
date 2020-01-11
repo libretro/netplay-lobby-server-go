@@ -115,5 +115,31 @@ func TestSessionRepositoryUpdate(t *testing.T) {
 	assert.Equal(t, *newSession.MitmIP, newIP)
 }
 
+func TestSessionRepositoryTouch(t *testing.T) {
+	sessionRepository := setupSessionRepository(t)
+	session := testSession
 
-// TODO add tests for Touch and PurgeOld
+	session.CalculateID()
+	session.CalculateContentHash()
+	err := sessionRepository.Create(&session)
+	require.NoError(t, err, "Can't create session")
+
+	oldSession, err := sessionRepository.GetByID(session.ID)
+	require.NoError(t, err, "Can't get session by ID")
+
+	oldTimestamp := oldSession.UpdatedAt
+
+	err = sessionRepository.Touch(oldSession.ID)
+	require.NoError(t, err, "Can't touch session")
+
+	newSession, err := sessionRepository.GetByID(session.ID)
+	require.NoError(t, err, "Can't get session by ID")
+
+	require.NotNil(t, newSession)
+	assert.False(t, newSession.UpdatedAt.Equal(oldTimestamp), "New timestamp did not change after touch")
+	assert.True(t, newSession.UpdatedAt.After(oldTimestamp), "New timestamp is not older after touch")
+
+	assert.Equal(t, oldSession.ContentHash, newSession.ContentHash)
+}
+
+// TODO add tests for PurgeOld

@@ -56,7 +56,7 @@ func (r *SessionRepository) Update(s *Session) error {
 
 // Touch updates the UpdatedAt timestamp.
 func (r *SessionRepository) Touch(id string) error {
-	if err := r.db.Model(&Session{}).Update("hash", id).Error; err != nil {
+	if err := r.db.Model(&Session{}).Update("id", id).Error; err != nil {
 		return fmt.Errorf("can't touch session with ID %s: %w", id, err)
 	}
 	return nil
