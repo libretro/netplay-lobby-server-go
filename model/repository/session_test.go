@@ -5,11 +5,10 @@ import (
 	"net"
 	"time"
 
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/libretro/netplay-lobby-server-go/model"
 	"github.com/libretro/netplay-lobby-server-go/model/entity"
 )
 
@@ -37,7 +36,7 @@ var testSession = entity.Session{
 }
 
 func setupSessionRepository(t *testing.T) *SessionRepository {
-	db, err := gorm.Open("sqlite3", ":memory:")
+	db, err := model.GetSqliteDB(":memory:")
 	if err != nil {
 		t.Fatalf("Can't open sqlite3 db: %v", err)
 	}
