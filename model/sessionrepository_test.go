@@ -2,6 +2,7 @@ package model
 
 import (
 	"testing"
+	"net"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -91,4 +92,28 @@ func TestSessionRepositoryGetAll(t *testing.T) {
 	assert.Less(t, sessions[0].Username, sessions[1].Username, "Sessions are not ordered by username")
 }
 
-// TODO add tests for Update, Touch and PurgeOld
+func TestSessionRepositoryUpdate(t *testing.T) {
+	sessionRepository := setupSessionRepository(t)
+	session := testSession
+
+	session.CalculateID()
+	session.CalculateContentHash()
+	err := sessionRepository.Create(&session)
+	require.NoError(t, err, "Can't create session")
+
+	newIP := net.ParseIP("83.12.41.222")
+	session.MitmIP = &newIP
+
+	session.CalculateContentHash()
+	err = sessionRepository.Update(&session)
+	require.NoError(t, err, "Can't update session")
+
+	newSession, err := sessionRepository.GetByID(session.ID)
+	require.NoError(t, err, "Can't get session by ID")
+
+	require.NotNil(t, newSession)
+	assert.Equal(t, *newSession.MitmIP, newIP)
+}
+
+
+// TODO add tests for Touch and PurgeOld

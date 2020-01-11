@@ -51,6 +51,7 @@ func (s *Session) CalculateID() {
 	hash := make([]byte, 64)
 	shake := sha3.NewShake256()
 
+	// TODO this is the original logic, but I think only username, IP and port should matter
 	shake.Write([]byte(s.Username))
 	shake.Write([]byte(s.GameName))
 	shake.Write([]byte(s.GameCRC))
