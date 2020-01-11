@@ -17,19 +17,22 @@ func NewSessionRepository(db *gorm.DB) *SessionRepository {
 	return &SessionRepository{db}
 }
 
-// GetAll returns all sessions currently beeing hosted.
-func (r *SessionRepository) GetAll() ([]Session, error) {
+// GetAllValid returns all sessions currently beeing hosted that are not older than the provided deadline.
+func (r *SessionRepository) GetAllValid(deadline time.Time) ([]Session, error) {
 	var s []Session
-	if err := r.db.Order("username").Find(&s).Error; err != nil {
+	if err := r.db.Where("updated_at > ?", deadline).Order("username").Find(&s).Error; err != nil {
 		return nil, fmt.Errorf("can't query for all sessions: %w", err)
 	}
 	return s, nil
 }
 
-// GetByID returns the session with the given ID.
+// GetByID returns the session with the given ID. Returns nil if session can't be found.
 func (r *SessionRepository) GetByID(id string) (*Session, error) {
 	var s Session
 	if err := r.db.Where("id = ?", id).First(&s).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("can't query session with ID %s: %w", id, err)
 	}
 	return &s, nil

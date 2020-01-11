@@ -37,8 +37,7 @@ func (d *SessionDomain) AddOrUpdateSession(s *model.Session) error {
 
 // PurgeOldSessions removes all sessions that have not been updated for longer than 45 seconds.
 func (d *SessionDomain) PurgeOldSessions(duration time.Duration) error {
-	deadline := time.Now().Add(-45 * time.Second)
-	if err := d.sessionRepo.PurgeOld(deadline); err != nil {
+	if err := d.sessionRepo.PurgeOld(getDeadline()); err != nil {
 		return err
 	}
 	return nil
@@ -46,9 +45,13 @@ func (d *SessionDomain) PurgeOldSessions(duration time.Duration) error {
 
 // ListSessions returns a list of all sessions that are currently beeing hosted
 func (d *SessionDomain) ListSessions() ([]model.Session, error) {
-	sessions, err := d.sessionRepo.GetAll()
+	sessions, err := d.sessionRepo.GetAllValid(getDeadline())
 	if err != nil {
 		return nil, err
 	}
 	return sessions, nil
+}
+
+func getDeadline() time.Time {
+	return time.Now().Add(-45 * time.Second)
 }

@@ -42,7 +42,7 @@ type Session struct {
 	HasPassword         bool       `json:"has_password"`
 	HasSpectatePassword bool       `json:"has_spectate_password"`
 	CreatedAt           time.Time  `json:"created"`
-	UpdatedAt           time.Time  `json:"updated"`
+	UpdatedAt           time.Time  `json:"updated" gorm:"index"`
 	ContentHash         string     `json:"-" gorm:"size:128"`
 }
 
