@@ -53,10 +53,10 @@ func (d *SessionDomain) Add(session *entity.Session) (*entity.Session, error) {
 		return nil, fmt.Errorf("can't get saved session: %w", err)
 	}
 	if savedSession != nil {
-		requestType = SessionUpdate
+		requestType = SessionTouch
 		session.CalculateContentHash()
 		if savedSession.ContentHash != session.ContentHash {
-			requestType = SessionTouch
+			requestType = SessionUpdate
 		}
 	}
 
