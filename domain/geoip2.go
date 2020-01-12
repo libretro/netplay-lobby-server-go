@@ -28,9 +28,9 @@ func NewGeoIP2Domain(path string) (*GeoIP2Domain, error) {
 
 // GetCountryCodeForIP returns the two letter country code (ISO 3166-1) for the given IP.
 func (d *GeoIP2Domain) GetCountryCodeForIP(ip net.IP) (string, error) {
-	var record countryRecord
+	record := &countryRecord{}
 
-	err := d.db.Lookup(ip, &record)
+	err := d.db.Lookup(ip, record)
 	if err != nil {
 		return "", fmt.Errorf("can't lookup country for IP %s: %w", ip, err)
 	}

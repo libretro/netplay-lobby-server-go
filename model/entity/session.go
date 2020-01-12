@@ -24,7 +24,8 @@ const (
 
 // Session is the database presentation of a netplay session.
 type Session struct {
-	ID                  string     `json:"-" gorm:"primary_key,size:128"`
+	ID                  string     `json:"-" gorm:"primary_key;size:64"`
+	ContentHash         string     `json:"-" gorm:"size:64"`
 	Username            string     `json:"username"`
 	Country             string     `json:"country" gorm:"size:2"`
 	GameName            string     `json:"game_name"`
@@ -43,20 +44,19 @@ type Session struct {
 	HasSpectatePassword bool       `json:"has_spectate_password"`
 	CreatedAt           time.Time  `json:"created"`
 	UpdatedAt           time.Time  `json:"updated" gorm:"index"`
-	ContentHash         string     `json:"-" gorm:"size:128"`
 }
 
-// CalculateID creates a 64bit SHAKE256 (SHA3) hash of the session for the db to use as PK.
+// CalculateID creates a 32 byte SHAKE256 (SHA3) hash of the session for the db to use as PK.
 func (s *Session) CalculateID() {
-	hash := make([]byte, 64)
+	hash := make([]byte, 32)
 	shake := sha3.NewShake256()
 
-	// TODO this is the original logic, but I think only username, IP and port should matter
 	shake.Write([]byte(s.Username))
-	shake.Write([]byte(s.GameName))
-	shake.Write([]byte(s.GameCRC))
-	shake.Write([]byte(s.CoreName))
-	shake.Write([]byte(s.CoreVersion))
+	// TODO old version did include these fields. But I think the current version in more sensible. TEST ME
+	//shake.Write([]byte(s.GameName))
+	//shake.Write([]byte(s.GameCRC))
+	//shake.Write([]byte(s.CoreName))
+	//shake.Write([]byte(s.CoreVersion))
 	shake.Write([]byte(s.IP))
 	shake.Write([]byte(strconv.FormatUint(uint64(s.Port), 10)))
 
@@ -65,9 +65,9 @@ func (s *Session) CalculateID() {
 	s.ID = hex.EncodeToString(hash)
 }
 
-// CalculateContentHash creates a 64bit SHAKE256 (SHA3) hash of the session content.
+// CalculateContentHash creates a 32 byte SHAKE256 (SHA3) hash of the session content.
 func (s *Session) CalculateContentHash() {
-	hash := make([]byte, 64)
+	hash := make([]byte, 32)
 	shake := sha3.NewShake256()
 
 	shake.Write([]byte(s.Username))

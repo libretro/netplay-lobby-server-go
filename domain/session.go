@@ -21,10 +21,10 @@ const (
     SessionTouch
 )
 
-// MitmSession represents a relay server session
+// mitmSession represents a relay server session
 type mitmSession struct {
-	ip net.IP
-	port uint16
+	IP net.IP
+	Port uint16
 }
 
 // ErrSessionRejected is thrown when a session got rejected by the domain logic. 
@@ -58,22 +58,23 @@ func NewSessionDomain(sessionRepo SessionRepository, geoIP2Domain *GeoIP2Domain,
 // Add adds or updates a session, based on the incomming session information.
 // Returns ErrSessionRejected if session got rejected.
 // Returns ErrRateLimited if rate limit for a session got reached.
-// TODO controller has to set the IP
-// TODO middleware for rate-limiting an IP on request basis (not more than 10 adds a minute?)
-// TODO write test
 func (d *SessionDomain) Add(session *entity.Session) (*entity.Session, error) {
 	var err error
 	var savedSession *entity.Session
 	var requestType requestType = SessionCreate
+
+	if (session.IP == nil || session.Port == 0) {
+		return nil, errors.New("IP or port not set")
+	}
 
 	// Decide if this is an CREATE, UPDATE or TOUCH operation
 	session.CalculateID()
 	if savedSession, err = d.sessionRepo.GetByID(session.ID); err != nil {
 		return nil, fmt.Errorf("Can't get saved session: %w", err)
 	}
+	session.CalculateContentHash()
 	if savedSession != nil {
 		requestType = SessionTouch
-		session.CalculateContentHash()
 		if savedSession.ContentHash != session.ContentHash {
 			requestType = SessionUpdate
 		}
@@ -86,9 +87,14 @@ func (d *SessionDomain) Add(session *entity.Session) (*entity.Session, error) {
 		}
 	}
 
-	if (requestType == SessionCreate) {
-		// TODO
-		d.openMITMSession(session)
+	// Open a game session on the selected MITM server if requested
+	if (requestType == SessionCreate && session.HostMethod == entity.HostMethodMITM) {
+		mitm, err := d.openMITMSession(session)
+		if err != nil {
+			return nil, fmt.Errorf("Can't open")
+		}
+		session.MitmIP = mitm.IP
+		session.MitmPort = mitm.Port
 	}
 
 	// Persist session changes
@@ -133,24 +139,34 @@ func (d *SessionDomain) PurgeOld() error {
 	return nil
 }
 
-//
+// validateSession validaes an incomming session
 func (d *SessionDomain) validateSession(s *entity.Session) bool {
-	// TODO verify the string lengt of each field
+	if len(s.Username) > 32 ||
+		len(s.CoreName) > 255 ||
+		len(s.GameName) > 255 ||
+		len(s.GameCRC) != 8 ||
+		len(s.RetroArchVersion) > 32 ||
+		len(s.SubsystemName) > 255 ||
+		len(s.Frontend) > 255 {
+			return false;
+	}
 
-	if d.validationDomain.ValidateString(s.Username) ||
-		d.validationDomain.ValidateString(s.CoreVersion) ||
-		d.validationDomain.ValidateString(s.Frontend) ||
-		d.validationDomain.ValidateString(s.SubsystemName) ||
-		d.validationDomain.ValidateString(s.RetroArchVersion) {
+	if !d.validationDomain.ValidateString(s.Username) ||
+		!d.validationDomain.ValidateString(s.CoreVersion) ||
+		!d.validationDomain.ValidateString(s.Frontend) ||
+		!d.validationDomain.ValidateString(s.SubsystemName) ||
+		!d.validationDomain.ValidateString(s.RetroArchVersion) {
 			return false;
 	}
 
 	return true
 }
 
-// TODO write test
+// openMITMSession opens a new netplay session on the specified MITM server
 func (d *SessionDomain) openMITMSession(s *entity.Session) (*mitmSession, error)  {
-	// TODO
+	// TODO and implement a test using the Add function
+	// TODO we need a MITM serve list and need to validate against it
+	// TODO maybe this should be it's own domain logic?
 	return nil, nil
 }
 

@@ -2,6 +2,8 @@ package domain
 
 
 import (
+	"net"
+	"errors"
 	"time"
 	"testing"
 
@@ -11,6 +13,29 @@ import (
 
 	"github.com/libretro/netplay-lobby-server-go/model/entity"
 )
+
+var testSession = entity.Session{
+	ID:                  "",
+	Username:            "zelda",
+	Country:             "EN",
+	GameName:            "supergame",
+	GameCRC:             "FFFFFFFF",
+	CoreName:            "bsnes",
+	CoreVersion:         "0.2.1",
+	SubsystemName:       "subsub",
+	RetroArchVersion:    "1.1.1",
+	Frontend:            "retro",
+	IP:                  net.ParseIP("192.168.178.2"),
+	Port:                55355,
+	MitmIP:              net.ParseIP("0.0.0.0"),
+	MitmPort:            0,
+	HostMethod:          entity.HostMethodUPNP,
+	HasPassword:         false,
+	HasSpectatePassword: false,
+	CreatedAt:           time.Now(),
+	UpdatedAt:           time.Now(),
+	ContentHash:         "",
+}
 
 type SessionRepositoryMock struct{
 	mock.Mock
@@ -43,11 +68,22 @@ func (m *SessionRepositoryMock) PurgeOld(deadline time.Time) error {
 	return args.Error(0)
 }
 
-// TODO test SessionDomain.AddOrUpdate()
+func setupSessionDomain(t *testing.T) (*SessionDomain, *SessionRepositoryMock) {
+	repoMock := SessionRepositoryMock{}
+
+	validationDomain, err := NewValidationDomain(testCoreWhitelist, testStringBlacklist, testIPBlacklist)
+	require.NoError(t, err)
+
+	geoip2Domain := setupGeoip2Domain(t)
+
+	sessionDomain := NewSessionDomain(&repoMock, geoip2Domain, validationDomain)
+	require.NoError(t, err)
+
+	return sessionDomain, &repoMock
+}
 
 func TestSessionDomainPurgeOld(t *testing.T) {
-	repoMock := SessionRepositoryMock{}
-	sessionDomain := NewSessionDomain(&repoMock, &GeoIP2Domain{}, &ValidationDomain{})
+	sessionDomain, repoMock := setupSessionDomain(t)
 
 	// Test the deadline duration
 	repoMock.On("PurgeOld", mock.MatchedBy(
@@ -62,8 +98,7 @@ func TestSessionDomainPurgeOld(t *testing.T) {
 }
 
 func TestSessionDomainList(t *testing.T) {
-	repoMock := SessionRepositoryMock{}
-	sessionDomain := NewSessionDomain(&repoMock, &GeoIP2Domain{}, &ValidationDomain{})
+	sessionDomain, repoMock := setupSessionDomain(t)
 
 	// Test the deadline duration
 	repoMock.On("GetAll", mock.MatchedBy(
@@ -77,4 +112,121 @@ func TestSessionDomainList(t *testing.T) {
 	require.NoError(t, err, "Can't list sessions")
 	require.NotNil(t, sessions)
 	assert.Equal(t, 3, len(sessions))
+}
+
+func TestSessionDomainValidateSessionAtCreate(t *testing.T) {
+	sessionDomain, repoMock := setupSessionDomain(t)
+
+	session := testSession
+	comp := session
+	comp.CalculateID()
+	comp.CalculateContentHash()
+	session.GameCRC = "123456789"
+
+	repoMock.On("GetByID", mock.MatchedBy(
+		func(s string) bool {
+        	return s == comp.ID
+		})).Return(nil, nil)
+
+	newSession, err := sessionDomain.Add(&session)
+	require.Error(t, err)
+	assert.Nil(t, newSession)
+	assert.True(t, errors.Is(err, ErrSessionRejected))
+}
+
+func TestSessionDomainValidateSessionAtUpdate(t *testing.T) {
+	sessionDomain, repoMock := setupSessionDomain(t)
+
+	session := testSession
+	comp := session
+	comp.CalculateID()
+	comp.CalculateContentHash()
+	session.RetroArchVersion = "0123456789ABCDEF0123456789ABCDEF_INVALID"
+
+	repoMock.On("GetByID", mock.MatchedBy(
+		func(s string) bool {
+        	return s == comp.ID
+		})).Return(&comp, nil)
+
+	newSession, err := sessionDomain.Add(&session)
+	require.Error(t, err)
+	assert.Nil(t, newSession)
+	assert.True(t, errors.Is(err, ErrSessionRejected))
+}
+
+func TestSessionDomainAddSessionTypeCreate(t *testing.T) {
+	sessionDomain, repoMock := setupSessionDomain(t)
+
+	session := testSession
+	comp := session
+	comp.CalculateID()
+	comp.CalculateContentHash()
+
+	repoMock.On("GetByID", mock.MatchedBy(
+		func(s string) bool {
+        	return s == comp.ID
+		})).Return(nil, nil)
+
+	repoMock.On("Create", mock.MatchedBy(
+		func(s *entity.Session) bool {
+			return s.ID == comp.ID && s.ContentHash == comp.ContentHash
+		})).Return(nil)
+
+	newSession, err := sessionDomain.Add(&session)
+	require.NoError(t, err)
+	require.NotNil(t, newSession)
+	assert.Equal(t, comp.ID, newSession.ID)
+	assert.Equal(t, comp.ContentHash, newSession.ContentHash)
+}
+
+func TestSessionDomainAddSessionTypeUpdate(t *testing.T) {
+	sessionDomain, repoMock := setupSessionDomain(t)
+
+	session := testSession
+	comp := session
+	comp.CalculateID()
+	comp.CalculateContentHash()
+
+	session.GameCRC = "88888888"
+
+	repoMock.On("GetByID", mock.MatchedBy(
+		func(s string) bool {
+        	return s == comp.ID
+		})).Return(&comp, nil)
+
+	repoMock.On("Update", mock.MatchedBy(
+		func(s *entity.Session) bool {
+			return s.ID == comp.ID && s.ContentHash != comp.ContentHash
+		})).Return(nil)
+
+	newSession, err := sessionDomain.Add(&session)
+	require.NoError(t, err)
+	require.NotNil(t, newSession)
+	assert.Equal(t, comp.ID, newSession.ID)
+	assert.NotEqual(t, comp.ContentHash, newSession.ContentHash)
+}
+
+func TestSessionDomainAddSessionTypeTouch(t *testing.T) {
+	sessionDomain, repoMock := setupSessionDomain(t)
+
+	session := testSession
+	comp := session
+	comp.CalculateID()
+	comp.CalculateContentHash()
+
+	repoMock.On("GetByID", mock.MatchedBy(
+		func(s string) bool {
+        	return s == comp.ID
+		})).Return(&comp, nil)
+
+	repoMock.On("Touch", mock.MatchedBy(
+		func(id string) bool {
+			return id == comp.ID
+		})).Return(nil)
+
+	newSession, err := sessionDomain.Add(&session)
+	require.NoError(t, err)
+	require.NotNil(t, newSession)
+	assert.Equal(t, comp.ID, newSession.ID)
+	assert.Equal(t, comp.ContentHash, newSession.ContentHash)
 }
