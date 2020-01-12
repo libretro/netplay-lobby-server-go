@@ -47,7 +47,7 @@ func (m *SessionRepositoryMock) PurgeOld(deadline time.Time) error {
 
 func TestSessionDomainPurgeOld(t *testing.T) {
 	repoMock := SessionRepositoryMock{}
-	sessionDomain := NewSessionDomain(&repoMock)
+	sessionDomain := NewSessionDomain(&repoMock, &GeoIP2Domain{}, &ValidationDomain{})
 
 	// Test the deadline duration
 	repoMock.On("PurgeOld", mock.MatchedBy(
@@ -63,7 +63,7 @@ func TestSessionDomainPurgeOld(t *testing.T) {
 
 func TestSessionDomainList(t *testing.T) {
 	repoMock := SessionRepositoryMock{}
-	sessionDomain := NewSessionDomain(&repoMock)
+	sessionDomain := NewSessionDomain(&repoMock, &GeoIP2Domain{}, &ValidationDomain{})
 
 	// Test the deadline duration
 	repoMock.On("GetAll", mock.MatchedBy(

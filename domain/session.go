@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/libretro/netplay-lobby-server-go/model/entity"
@@ -11,14 +12,20 @@ import (
 // SessionDeadline is lifespan of a session that hasn't recieved any updated in seconds.
 const SessionDeadline = 60
 
-// RequestType enum
-type RequestType int
+// requestType enum
+type requestType int
 // SessionAddType enum value
 const (
-    SessionCreate RequestType = iota
+    SessionCreate requestType = iota
     SessionUpdate
     SessionTouch
 )
+
+// MitmSession represents a relay server session
+type mitmSession struct {
+	ip net.IP
+	port uint16
+}
 
 // ErrSessionRejected is thrown when a session got rejected by the domain logic. 
 var ErrSessionRejected = errors.New("Session rejected")
@@ -26,26 +33,38 @@ var ErrSessionRejected = errors.New("Session rejected")
 // ErrRateLimited is thrown when the rate limit is reached for a particular session.
 var ErrRateLimited = errors.New("Rate limit reached")
 
+// SessionRepository interface to decouple the domain logic from the repository code.
+type SessionRepository interface {
+	Create(s *entity.Session) error
+	GetByID(id string) (*entity.Session, error)
+	GetAll(deadline time.Time) ([]entity.Session, error)
+	Update(s *entity.Session) error
+	Touch(id string) error
+	PurgeOld(deadline time.Time) error
+}
+
 // SessionDomain abrsracts the domain logic for netplay session handling.
 type SessionDomain struct {
 	sessionRepo SessionRepository
+	geopip2Domain *GeoIP2Domain
+	validationDomain *ValidationDomain
 }
 
 // NewSessionDomain returns an initalized SessionDomain struct.
-func NewSessionDomain(sessionRepo SessionRepository) *SessionDomain {
-	return &SessionDomain{sessionRepo}
+func NewSessionDomain(sessionRepo SessionRepository, geoIP2Domain *GeoIP2Domain, validationDomain *ValidationDomain) *SessionDomain {
+	return &SessionDomain{sessionRepo, geoIP2Domain, validationDomain}
 }
 
 // Add adds or updates a session, based on the incomming session information.
 // Returns ErrSessionRejected if session got rejected.
 // Returns ErrRateLimited if rate limit for a session got reached.
 // TODO controller has to set the IP
-// TODO middleware for rate-limiting an IP on request basis (not more than 10 adds a minute)
+// TODO middleware for rate-limiting an IP on request basis (not more than 10 adds a minute?)
 // TODO write test
 func (d *SessionDomain) Add(session *entity.Session) (*entity.Session, error) {
 	var err error
 	var savedSession *entity.Session
-	var requestType RequestType = SessionCreate
+	var requestType requestType = SessionCreate
 
 	// Decide if this is an CREATE, UPDATE or TOUCH operation
 	session.CalculateID()
@@ -67,13 +86,24 @@ func (d *SessionDomain) Add(session *entity.Session) (*entity.Session, error) {
 		}
 	}
 
+	if (requestType == SessionCreate) {
+		// TODO
+		d.openMITMSession(session)
+	}
+
 	// Persist session changes
 	switch (requestType) {
 	case SessionCreate:
+		if session.Country, err = d.geopip2Domain.GetCountryCodeForIP(session.IP); err != nil {
+			return nil, fmt.Errorf("Can't find country for given IP %s: %w", session.IP, err)
+		}
+
 		if err = d.sessionRepo.Create(session); err != nil {
 			return nil, fmt.Errorf("Can't create new session: %w", err)
 		}
 	case SessionUpdate:
+		session.Country = savedSession.Country
+
 		if err = d.sessionRepo.Update(session); err != nil {
 			return nil, fmt.Errorf("Can't update old session: %w", err)
 		}
@@ -103,21 +133,27 @@ func (d *SessionDomain) PurgeOld() error {
 	return nil
 }
 
-// TODO write test
+//
 func (d *SessionDomain) validateSession(s *entity.Session) bool {
-	return false
+	// TODO verify the string lengt of each field
+
+	if d.validationDomain.ValidateString(s.Username) ||
+		d.validationDomain.ValidateString(s.CoreVersion) ||
+		d.validationDomain.ValidateString(s.Frontend) ||
+		d.validationDomain.ValidateString(s.SubsystemName) ||
+		d.validationDomain.ValidateString(s.RetroArchVersion) {
+			return false;
+	}
+
+	return true
+}
+
+// TODO write test
+func (d *SessionDomain) openMITMSession(s *entity.Session) (*mitmSession, error)  {
+	// TODO
+	return nil, nil
 }
 
 func (d *SessionDomain) getDeadline() time.Time {
 	return time.Now().Add(-SessionDeadline * time.Second)
-}
-
-// SessionRepository interface to decouple the domain logic from the repository code.
-type SessionRepository interface {
-	Create(s *entity.Session) error
-	GetByID(id string) (*entity.Session, error)
-	GetAll(deadline time.Time) ([]entity.Session, error)
-	Update(s *entity.Session) error
-	Touch(id string) error
-	PurgeOld(deadline time.Time) error
 }

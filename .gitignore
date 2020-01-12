@@ -1,2 +1,4 @@
 netplay-lobby-server-go
 netplay-lobby-server-go.exe
+
+config/lobby.yaml
