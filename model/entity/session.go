@@ -2,7 +2,9 @@ package entity
 
 import (
 	"encoding/hex"
+	"fmt"
 	"net"
+	"strings"
 	"strconv"
 	"time"
 
@@ -21,6 +23,7 @@ const (
 )
 
 // TODO remove "fixed" field from retroarch frontend code
+// TODO remove "ID" field from retroarch frontent code
 
 // Session is the database presentation of a netplay session.
 type Session struct {
@@ -83,4 +86,38 @@ func (s *Session) CalculateContentHash() {
 	shake.Read(hash)
 
 	s.ContentHash = hex.EncodeToString(hash)
+}
+
+// PrintForRetroarch prints out the session information in a format, that retroarch is expecting.
+func (s *Session) PrintForRetroarch() string {
+	var str string
+	var hasPassword = 0
+	var hasSpectatePassword = 0
+	
+	if s.HasPassword {
+		hasPassword = 1
+	}
+
+	if s.HasSpectatePassword {
+		hasSpectatePassword = 1
+	}
+
+	str += fmt.Sprintf("username=%s\ncore_name=%s\ngame_name=%s\ngame_crc=%s\ncore_version=%s\nip=%s\nport=%d\nhost_method=%d\nhas_password=%d\nhas_spectate_password=%d\nretroarch_version=%s\nfrontend=%s\nsubsystem_name=%s\ncountry=%s\n",
+		s.Username,
+		s.CoreName,
+		s.GameName,
+		strings.ToUpper(s.GameCRC),
+		s.CoreVersion,
+		s.IP,
+		s.Port,
+		s.HostMethod,
+		hasPassword,
+		hasSpectatePassword,
+		s.RetroArchVersion,
+		s.Frontend,
+		s.SubsystemName,
+		strings.ToUpper(s.Country),
+	)
+
+	return str
 }

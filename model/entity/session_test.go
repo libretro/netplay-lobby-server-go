@@ -132,3 +132,5 @@ func TestUpdatedAtDoesNotChangeContentHash(t *testing.T) {
 
 	assert.Equal(t, oldHash, newHash)
 }
+
+// TODO test PrintForRetroarch()
