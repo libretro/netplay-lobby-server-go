@@ -20,7 +20,7 @@ const (
 	HostMethodMITM    = 3
 )
 
-// TODO remove "fixed" field from retroarch frontend
+// TODO remove "fixed" field from retroarch frontend code
 
 // Session is the database presentation of a netplay session.
 type Session struct {
@@ -52,11 +52,6 @@ func (s *Session) CalculateID() {
 	shake := sha3.NewShake256()
 
 	shake.Write([]byte(s.Username))
-	// TODO old version did include these fields. But I think the current version in more sensible. TEST ME
-	//shake.Write([]byte(s.GameName))
-	//shake.Write([]byte(s.GameCRC))
-	//shake.Write([]byte(s.CoreName))
-	//shake.Write([]byte(s.CoreVersion))
 	shake.Write([]byte(s.IP))
 	shake.Write([]byte(strconv.FormatUint(uint64(s.Port), 10)))
 

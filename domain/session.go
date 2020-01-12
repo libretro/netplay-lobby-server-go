@@ -136,6 +136,7 @@ func (d *SessionDomain) List() ([]entity.Session, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return sessions, nil
 }
 
@@ -144,6 +145,7 @@ func (d *SessionDomain) PurgeOld() error {
 	if err := d.sessionRepo.PurgeOld(d.getDeadline()); err != nil {
 		return err
 	}
+	
 	return nil
 }
 

@@ -79,6 +79,7 @@ func (d* ValidationDomain) isASCII(s string) bool {
         if char > unicode.MaxASCII {
             return false
         }
-    }
+	}
+	
     return true
 }
