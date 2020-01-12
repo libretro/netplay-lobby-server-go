@@ -80,6 +80,14 @@ func (d *SessionDomain) Add(session *entity.Session) (*entity.Session, error) {
 		}
 	}
 
+	// Ratelimit on UPDATE or TOUCH
+	if requestType == SessionUpdate || requestType == SessionTouch {
+		treshhold := time.Now().Add(-10 * time.Second)
+		if savedSession.UpdatedAt.After(treshhold) {
+			return nil, ErrRateLimited
+		}
+	}
+
 	// Validate session on CREATE and UPDATE
 	if (requestType == SessionCreate || requestType == SessionUpdate) {
 		if !d.validateSession(session) {

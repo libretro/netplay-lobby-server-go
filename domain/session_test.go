@@ -32,8 +32,8 @@ var testSession = entity.Session{
 	HostMethod:          entity.HostMethodUPNP,
 	HasPassword:         false,
 	HasSpectatePassword: false,
-	CreatedAt:           time.Now(),
-	UpdatedAt:           time.Now(),
+	CreatedAt:           time.Now().Add(-5 * time.Minute),
+	UpdatedAt:           time.Now().Add(-5 * time.Minute),
 	ContentHash:         "",
 }
 
@@ -229,4 +229,56 @@ func TestSessionDomainAddSessionTypeTouch(t *testing.T) {
 	require.NotNil(t, newSession)
 	assert.Equal(t, comp.ID, newSession.ID)
 	assert.Equal(t, comp.ContentHash, newSession.ContentHash)
+}
+
+func TestSessionDomainAddSessionTypeUpdateRateLimit(t *testing.T) {
+	sessionDomain, repoMock := setupSessionDomain(t)
+
+	session := testSession
+	comp := session
+	comp.UpdatedAt = time.Now().Add(-5 * time.Second)
+	comp.CalculateID()
+	comp.CalculateContentHash()
+
+	session.GameCRC = "88888888"
+
+	repoMock.On("GetByID", mock.MatchedBy(
+		func(s string) bool {
+        	return s == comp.ID
+		})).Return(&comp, nil)
+
+	repoMock.On("Update", mock.MatchedBy(
+		func(s *entity.Session) bool {
+			return s.ID == comp.ID && s.ContentHash != comp.ContentHash
+		})).Return(nil)
+
+	newSession, err := sessionDomain.Add(&session)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, ErrRateLimited))
+	assert.Nil(t, newSession)
+}
+
+func TestSessionDomainAddSessionTypeTouchRateLimit(t *testing.T) {
+	sessionDomain, repoMock := setupSessionDomain(t)
+
+	session := testSession
+	comp := session
+	comp.UpdatedAt = time.Now().Add(-5 * time.Second)
+	comp.CalculateID()
+	comp.CalculateContentHash()
+
+	repoMock.On("GetByID", mock.MatchedBy(
+		func(s string) bool {
+        	return s == comp.ID
+		})).Return(&comp, nil)
+
+	repoMock.On("Touch", mock.MatchedBy(
+		func(id string) bool {
+			return id == comp.ID
+		})).Return(nil)
+
+	newSession, err := sessionDomain.Add(&session)
+	require.Error(t, err)
+	assert.True(t, errors.Is(err, ErrRateLimited))
+	assert.Nil(t, newSession)
 }
