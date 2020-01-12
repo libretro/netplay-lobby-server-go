@@ -2,11 +2,17 @@ package controller
 
 
 import (
+	"net/http"
+	"github.com/labstack/echo/v4"
+
+	"github.com/libretro/netplay-lobby-server-go/domain"
 	"github.com/libretro/netplay-lobby-server-go/model/entity"
 )
 
 // SessionController handles all session related request
-type SessionController struct {}
+type SessionController struct {
+	sessionDomain domain.SessionDomain
+}
 
 // AddSessionRequest defines the request for the AddSession request.
 type AddSessionRequest struct {
@@ -28,4 +34,29 @@ type AddSessionRequest struct {
 // ListSessionsResponse is a custom DTO for backward compatability.
 type ListSessionsResponse struct {
 	Fields entity.Session `json:"fields"`
+}
+
+// RegisterRoutes registers all controller routes at an echo framework instance.
+func (c *SessionController) RegisterRoutes(e *echo.Echo) {
+	e.POST("/add", c.Add)
+	e.GET("/list", c.List)
+	e.GET("/", c.Index)
+}
+
+// Index handler
+// GET /
+func (c *SessionController) Index(ctx echo.Context) error {
+	return ctx.String(http.StatusOK, "TODO")
+}
+
+// List handler
+// GET /list
+func (c *SessionController) List(ctx echo.Context) error {
+	return ctx.String(http.StatusOK, "TODO")
+}
+
+// Add handler
+// GET /add
+func (c *SessionController) Add(ctx echo.Context) error {
+	return ctx.String(http.StatusOK, "TODO")
 }
