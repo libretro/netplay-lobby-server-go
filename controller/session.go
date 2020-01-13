@@ -7,19 +7,30 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-
 	"github.com/libretro/netplay-lobby-server-go/domain"
 	"github.com/libretro/netplay-lobby-server-go/model/entity"
 )
 
-// SessionController handles all session related request
-type SessionController struct {
-	sessionDomain domain.SessionDomain
+// SessionDomain interface to decouple the controller logic from the domain code.
+type SessionDomain interface {
+	Add(request *domain.AddSessionRequest, ip net.IP) (*entity.Session, error)
+	List() ([]entity.Session, error)
+	PurgeOld() error
 }
 
 // ListSessionsResponse is a custom DTO for backward compatability.
 type ListSessionsResponse struct {
 	Fields entity.Session `json:"fields"`
+}
+
+// SessionController handles all session related request
+type SessionController struct {
+	sessionDomain SessionDomain
+}
+
+// NewSessionController returns a new session controller
+func NewSessionController(sessionDomain SessionDomain) *SessionController {
+	return &SessionController{sessionDomain}
 }
 
 // RegisterRoutes registers all controller routes at an echo framework instance.
@@ -31,13 +42,12 @@ func (c *SessionController) RegisterRoutes(e *echo.Echo) {
 
 // Index handler
 // GET /
-// TODO testme
 func (c *SessionController) Index(ctx echo.Context) error {
 	logger := ctx.Logger()
 
 	_, err := c.sessionDomain.List()
 	if err != nil {
-		logger.Errorf("Can't render session list: %w", err)
+		logger.Errorf("Can't render session list: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError);
 	}
 	// TODO template rendering
@@ -47,13 +57,12 @@ func (c *SessionController) Index(ctx echo.Context) error {
 
 // List handler
 // GET /list
-// TODO testme
 func (c *SessionController) List(ctx echo.Context) error {
 	logger := ctx.Logger()
 
 	sessions, err := c.sessionDomain.List()
 	if err != nil {
-		logger.Errorf("Can't render session list: %w", err)
+		logger.Errorf("Can't render session list: %v", err)
 		return echo.NewHTTPError(http.StatusInternalServerError);
 	}
 
@@ -69,7 +78,6 @@ func (c *SessionController) List(ctx echo.Context) error {
 
 // Add handler
 // GET /add
-// TODO testme
 func (c *SessionController) Add(ctx echo.Context) error {
 	logger := ctx.Logger()
 	var err error
@@ -77,14 +85,14 @@ func (c *SessionController) Add(ctx echo.Context) error {
 
 	var req domain.AddSessionRequest
 	if err := ctx.Bind(&req); err != nil {
-		logger.Errorf("Can't parse incomming session: %w", err)
+		logger.Errorf("Can't parse incomming session: %v", err)
 		return echo.NewHTTPError(http.StatusBadRequest);
 	}
 
 	ip := net.ParseIP(ctx.RealIP())
 
 	if session, err = c.sessionDomain.Add(&req, ip); err != nil {
-		logger.Errorf("Won't add session: %w", err)
+		logger.Errorf("Won't add session: %v", err)
 
 		if errors.Is(err, domain.ErrSessionRejected) {
 			logger.Errorf("Rejected session: %v", session)

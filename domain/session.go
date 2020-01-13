@@ -169,7 +169,7 @@ func (d *SessionDomain) PurgeOld() error {
 	return nil
 }
 
-// parseSession turns a request into a session information that can be compared to the persistet information
+// parseSession turns a request into a session information that can be compared to a persisted session
 func (d *SessionDomain) parseSession(req* AddSessionRequest, ip net.IP) *entity.Session {
 	var hostMethod entity.HostMethod = entity.HostMethodUnknown
 

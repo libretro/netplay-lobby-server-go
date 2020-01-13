@@ -55,32 +55,37 @@ var testSession = entity.Session{
 	ContentHash:         "",
 }
 
-type SessionRepositoryMock struct{
+type SessionRepositoryMock struct {
 	mock.Mock
-  }
+}
 
 func (m *SessionRepositoryMock) Create(s *entity.Session) error {
 	args := m.Called(s)
 	return args.Error(0)
 }
+
 func (m *SessionRepositoryMock) Update(s *entity.Session) error {
 	args := m.Called(s)
 	return args.Error(0)
 }
+
 func (m *SessionRepositoryMock) Touch(id string) error {
 	args := m.Called(id)
 	return args.Error(0)
 }
+
 func (m *SessionRepositoryMock) GetByID(id string) (*entity.Session, error) {
 	args := m.Called(id)
 	session, _ := args.Get(0).(*entity.Session)
 	return session, args.Error(1)
 }
+
 func (m *SessionRepositoryMock) GetAll(deadline time.Time) ([]entity.Session, error) {
 	args := m.Called(deadline)
 	sessions, _ := args.Get(0).([]entity.Session)
 	return sessions, args.Error(1)
 }
+
 func (m *SessionRepositoryMock) PurgeOld(deadline time.Time) error {
 	args := m.Called(deadline)
 	return args.Error(0)
