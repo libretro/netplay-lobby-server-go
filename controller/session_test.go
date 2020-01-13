@@ -10,7 +10,6 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 
 	"github.com/libretro/netplay-lobby-server-go/domain"
 	"github.com/libretro/netplay-lobby-server-go/model/entity"
@@ -77,8 +76,7 @@ func TestSessionControllerList(t *testing.T) {
 `
 	domainMock.On("List").Return(sessions, nil)
 
-	err := handler.List(ctx)
-	require.NoError(t, err, "Can't make request to list")
+	handler.List(ctx)
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.Equal(t, expectedResultBody, rec.Body.String())
 }
@@ -92,10 +90,9 @@ func TestSessionControllerListError(t *testing.T) {
 	ctx := e.NewContext(req, rec)
 	handler := NewSessionController(domainMock)
 
-	domainMock.On("List").Return(nil, errors.New("just a simple test"))
+	domainMock.On("List").Return(nil, errors.New("test error"))
 
-	err := handler.List(ctx)
-	require.Error(t, err, "Expected error is not occuring")
+	handler.List(ctx)
 	assert.Equal(t, http.StatusInternalServerError, rec.Code) // TODO
 	assert.Equal(t, "", rec.Body.String())
 }

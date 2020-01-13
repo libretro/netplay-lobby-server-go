@@ -48,7 +48,7 @@ func (c *SessionController) Index(ctx echo.Context) error {
 	_, err := c.sessionDomain.List()
 	if err != nil {
 		logger.Errorf("Can't render session list: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError);
+		return ctx.NoContent(http.StatusInternalServerError)
 	}
 	// TODO template rendering
 
@@ -63,7 +63,7 @@ func (c *SessionController) List(ctx echo.Context) error {
 	sessions, err := c.sessionDomain.List()
 	if err != nil {
 		logger.Errorf("Can't render session list: %v", err)
-		return echo.NewHTTPError(http.StatusInternalServerError);
+		return ctx.NoContent(http.StatusInternalServerError)
 	}
 
 	// For legacy reasons, we need to put the sessions inside a wrapper object
@@ -86,7 +86,7 @@ func (c *SessionController) Add(ctx echo.Context) error {
 	var req domain.AddSessionRequest
 	if err := ctx.Bind(&req); err != nil {
 		logger.Errorf("Can't parse incomming session: %v", err)
-		return echo.NewHTTPError(http.StatusBadRequest);
+		return ctx.NoContent(http.StatusBadRequest)
 	}
 
 	ip := net.ParseIP(ctx.RealIP())
@@ -96,11 +96,11 @@ func (c *SessionController) Add(ctx echo.Context) error {
 
 		if errors.Is(err, domain.ErrSessionRejected) {
 			logger.Errorf("Rejected session: %v", session)
-			return echo.NewHTTPError(http.StatusBadRequest);
+			return ctx.NoContent(http.StatusBadRequest)
 		} else if errors.Is(err, domain.ErrRateLimited) {
-			return echo.NewHTTPError(http.StatusTooManyRequests);
+			return ctx.NoContent(http.StatusTooManyRequests)
 		}
-		return echo.NewHTTPError(http.StatusBadRequest);
+		return ctx.NoContent(http.StatusBadRequest)
 	}
 
 	result := "status=OK\n"
