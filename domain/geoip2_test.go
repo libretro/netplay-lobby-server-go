@@ -39,5 +39,5 @@ func TestGeoIP2GetCountryCodeForIP(t *testing.T) {
 		localCode, err = geoip2Domain.GetCountryCodeForIP(net.ParseIP("10.0.0.1"))
 		assert.NoError(t, err, "Can't get local code")
 		assert.Equal(t, "", localCode)
-	}	
+	}
 }

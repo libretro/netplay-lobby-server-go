@@ -42,7 +42,7 @@ func (r *SessionRepository) GetByID(id string) (*entity.Session, error) {
 		}
 		return nil, fmt.Errorf("can't query session with ID %s: %w", id, err)
 	}
-	
+
 	return &s, nil
 }
 
@@ -78,6 +78,6 @@ func (r *SessionRepository) PurgeOld(deadline time.Time) error {
 	if err := r.db.Where("updated_at < ?", deadline).Delete(entity.Session{}).Error; err != nil {
 		return fmt.Errorf("can't delete old sessions: %w", err)
 	}
-	
+
 	return nil
 }

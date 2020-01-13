@@ -4,8 +4,8 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net"
-	"strings"
 	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/sha3"
@@ -92,7 +92,7 @@ func (s *Session) PrintForRetroarch() string {
 	var str string
 	var hasPassword = 0
 	var hasSpectatePassword = 0
-	
+
 	if s.HasPassword {
 		hasPassword = 1
 	}

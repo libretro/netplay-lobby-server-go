@@ -2,8 +2,8 @@ package domain
 
 import (
 	"fmt"
-	"net"
 	"github.com/oschwald/maxminddb-golang"
+	"net"
 )
 
 // GeoIP2Domain abstracts the GeoIP2 country database domain logic.
@@ -23,7 +23,7 @@ func NewGeoIP2Domain(path string) (*GeoIP2Domain, error) {
 	if err != nil {
 		return nil, fmt.Errorf("can't open geoip2 country database %s: %w", path, err)
 	}
-	
+
 	return &GeoIP2Domain{db}, nil
 }
 

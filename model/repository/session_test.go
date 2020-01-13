@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"testing"
 	"net"
+	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
@@ -82,7 +82,7 @@ func TestSessionRepositoryCreateMITMNull(t *testing.T) {
 func TestSessionRepositoryGetByID(t *testing.T) {
 	sessionRepository := setupSessionRepository(t)
 	session := testSession
-	
+
 	session.CalculateID()
 	session.CalculateContentHash()
 	err := sessionRepository.Create(&session)
@@ -112,7 +112,7 @@ func TestSessionRepositoryGetByID(t *testing.T) {
 func TestSessionRepositoryGetAll(t *testing.T) {
 	sessionRepository := setupSessionRepository(t)
 	session := testSession
-	
+
 	session.CalculateID()
 	session.CalculateContentHash()
 	err := sessionRepository.Create(&session)
@@ -134,14 +134,14 @@ func TestSessionRepositoryGetAll(t *testing.T) {
 	deadline := time.Now().Add(-1 * time.Minute)
 	sessions, err := sessionRepository.GetAll(deadline)
 	require.NoError(t, err, "Can't get all sessions with deadline")
-	
+
 	require.NotNil(t, sessions)
 	require.Equal(t, 2, len(sessions), "Query seems to include non valid entries.")
 	assert.Less(t, sessions[0].Username, sessions[1].Username, "Sessions are not ordered by username")
 
 	sessions, err = sessionRepository.GetAll(time.Time{})
 	require.NoError(t, err, "Can't get all sessions without deadline")
-	
+
 	require.NotNil(t, sessions)
 	require.Equal(t, 3, len(sessions), "Query seems to not include invalid entries.")
 	assert.Less(t, sessions[0].Username, sessions[1].Username, "Sessions are not ordered by username")
@@ -201,7 +201,7 @@ func TestSessionRepositoryTouch(t *testing.T) {
 func TestSessionRepositoryPurgeOld(t *testing.T) {
 	sessionRepository := setupSessionRepository(t)
 	session := testSession
-	
+
 	session.CalculateID()
 	session.CalculateContentHash()
 	err := sessionRepository.Create(&session)
@@ -226,7 +226,7 @@ func TestSessionRepositoryPurgeOld(t *testing.T) {
 
 	sessions, err := sessionRepository.GetAll(time.Time{})
 	require.NoError(t, err, "Can't get all sessions")
-	
+
 	require.NotNil(t, sessions)
 	require.Equal(t, len(sessions), 2, "Query seems to include non valid entries.")
 }

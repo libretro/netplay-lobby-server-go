@@ -1,10 +1,10 @@
 package domain
 
 import (
-	"net"
 	"errors"
-	"time"
+	"net"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -17,19 +17,19 @@ var testIP = net.ParseIP("192.168.178.2")
 
 // testRequest and testSession should have the same values for the test below.
 var testRequest = AddSessionRequest{
-	Username: "zelda",
-	CoreName: "bsnes",
-	CoreVersion: "0.2.1",
-	GameName: "supergame",
-	GameCRC: "FFFFFFFF",
-	Port: 55355,
-	MITMServer: "",
-	HasPassword: false,
+	Username:            "zelda",
+	CoreName:            "bsnes",
+	CoreVersion:         "0.2.1",
+	GameName:            "supergame",
+	GameCRC:             "FFFFFFFF",
+	Port:                55355,
+	MITMServer:          "",
+	HasPassword:         false,
 	HasSpectatePassword: false,
-	ForceMITM: false,
-	RetroArchVersion: "1.1.1",
-	Frontend: "retro",
-	SubsystemName: "subsub",
+	ForceMITM:           false,
+	RetroArchVersion:    "1.1.1",
+	Frontend:            "retro",
+	SubsystemName:       "subsub",
 }
 
 var testSession = entity.Session{
@@ -111,9 +111,9 @@ func TestSessionDomainPurgeOld(t *testing.T) {
 	// Test the deadline duration
 	repoMock.On("PurgeOld", mock.MatchedBy(
 		func(d time.Time) bool {
-			before := time.Now().Add(-(SessionDeadline-1) * time.Second)
-			after := time.Now().Add(-(SessionDeadline+1) * time.Second)
-        	return d.Before(before) && d.After(after)
+			before := time.Now().Add(-(SessionDeadline - 1) * time.Second)
+			after := time.Now().Add(-(SessionDeadline + 1) * time.Second)
+			return d.Before(before) && d.After(after)
 		})).Return(nil)
 
 	err := sessionDomain.PurgeOld()
@@ -126,9 +126,9 @@ func TestSessionDomainList(t *testing.T) {
 	// Test the deadline duration
 	repoMock.On("GetAll", mock.MatchedBy(
 		func(d time.Time) bool {
-			before := time.Now().Add(-(SessionDeadline-1) * time.Second)
-			after := time.Now().Add(-(SessionDeadline+1) * time.Second)
-        	return d.Before(before) && d.After(after)
+			before := time.Now().Add(-(SessionDeadline - 1) * time.Second)
+			after := time.Now().Add(-(SessionDeadline + 1) * time.Second)
+			return d.Before(before) && d.After(after)
 		})).Return(make([]entity.Session, 3), nil)
 
 	sessions, err := sessionDomain.List()
@@ -144,12 +144,12 @@ func TestSessionDomainValidateSessionAtCreate(t *testing.T) {
 	comp := testSession
 	comp.CalculateID()
 	comp.CalculateContentHash()
-	
+
 	request.GameCRC = "123456789"
 
 	repoMock.On("GetByID", mock.MatchedBy(
 		func(s string) bool {
-        	return s == comp.ID
+			return s == comp.ID
 		})).Return(nil, nil)
 
 	newSession, err := sessionDomain.Add(&request, testIP)
@@ -165,12 +165,12 @@ func TestSessionDomainValidateSessionAtUpdate(t *testing.T) {
 	comp := testSession
 	comp.CalculateID()
 	comp.CalculateContentHash()
-	
+
 	request.RetroArchVersion = "0123456789ABCDEF0123456789ABCDEF_INVALID"
 
 	repoMock.On("GetByID", mock.MatchedBy(
 		func(s string) bool {
-        	return s == comp.ID
+			return s == comp.ID
 		})).Return(&comp, nil)
 
 	newSession, err := sessionDomain.Add(&request, testIP)
@@ -189,7 +189,7 @@ func TestSessionDomainAddSessionTypeCreate(t *testing.T) {
 
 	repoMock.On("GetByID", mock.MatchedBy(
 		func(s string) bool {
-        	return s == comp.ID
+			return s == comp.ID
 		})).Return(nil, nil)
 
 	repoMock.On("Create", mock.MatchedBy(
@@ -216,7 +216,7 @@ func TestSessionDomainAddSessionTypeUpdate(t *testing.T) {
 
 	repoMock.On("GetByID", mock.MatchedBy(
 		func(s string) bool {
-        	return s == comp.ID
+			return s == comp.ID
 		})).Return(&comp, nil)
 
 	repoMock.On("Update", mock.MatchedBy(
@@ -241,7 +241,7 @@ func TestSessionDomainAddSessionTypeTouch(t *testing.T) {
 
 	repoMock.On("GetByID", mock.MatchedBy(
 		func(s string) bool {
-        	return s == comp.ID
+			return s == comp.ID
 		})).Return(&comp, nil)
 
 	repoMock.On("Touch", mock.MatchedBy(
@@ -269,7 +269,7 @@ func TestSessionDomainAddSessionTypeUpdateRateLimit(t *testing.T) {
 
 	repoMock.On("GetByID", mock.MatchedBy(
 		func(s string) bool {
-        	return s == comp.ID
+			return s == comp.ID
 		})).Return(&comp, nil)
 
 	repoMock.On("Update", mock.MatchedBy(
@@ -294,7 +294,7 @@ func TestSessionDomainAddSessionTypeTouchRateLimit(t *testing.T) {
 
 	repoMock.On("GetByID", mock.MatchedBy(
 		func(s string) bool {
-        	return s == comp.ID
+			return s == comp.ID
 		})).Return(&comp, nil)
 
 	repoMock.On("Touch", mock.MatchedBy(

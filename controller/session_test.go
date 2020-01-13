@@ -1,8 +1,8 @@
 package controller
 
 import (
-	"net"
 	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"testing"

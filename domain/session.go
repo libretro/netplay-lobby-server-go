@@ -15,31 +15,32 @@ const SessionDeadline = 60
 
 // requestType enum
 type requestType int
+
 // SessionAddType enum value
 const (
-    SessionCreate requestType = iota
-    SessionUpdate
-    SessionTouch
+	SessionCreate requestType = iota
+	SessionUpdate
+	SessionTouch
 )
 
 // AddSessionRequest defines the request for the SessionDomain.Add() request.
 type AddSessionRequest struct {
-	Username string `form:"username"`
-	CoreName string `form:"core_name"`
-	CoreVersion string `form:"core_version"`
-	GameName string `form:"game_name"`
-	GameCRC  string `form:"game_crc"`
-	Port uint16 `form:"port"`
-	MITMServer string `form:"mitm_server"`
-	HasPassword bool  `form:"has_password"` // 1/0 (Can it be bound to bool?)
-	HasSpectatePassword bool `form:"has_spectate_password"`
-	ForceMITM bool `form:"force_mitm"`
-	RetroArchVersion string `form:"retroarch_version"`
-	Frontend string `form:"frontend"`
-	SubsystemName string  `form:"subsystem_name"`
+	Username            string `form:"username"`
+	CoreName            string `form:"core_name"`
+	CoreVersion         string `form:"core_version"`
+	GameName            string `form:"game_name"`
+	GameCRC             string `form:"game_crc"`
+	Port                uint16 `form:"port"`
+	MITMServer          string `form:"mitm_server"`
+	HasPassword         bool   `form:"has_password"` // 1/0 (Can it be bound to bool?)
+	HasSpectatePassword bool   `form:"has_spectate_password"`
+	ForceMITM           bool   `form:"force_mitm"`
+	RetroArchVersion    string `form:"retroarch_version"`
+	Frontend            string `form:"frontend"`
+	SubsystemName       string `form:"subsystem_name"`
 }
 
-// ErrSessionRejected is thrown when a session got rejected by the domain logic. 
+// ErrSessionRejected is thrown when a session got rejected by the domain logic.
 var ErrSessionRejected = errors.New("Session rejected")
 
 // ErrRateLimited is thrown when the rate limit is reached for a particular session.
@@ -57,10 +58,10 @@ type SessionRepository interface {
 
 // SessionDomain abstracts the domain logic for netplay session handling.
 type SessionDomain struct {
-	sessionRepo SessionRepository
-	geopip2Domain *GeoIP2Domain
+	sessionRepo      SessionRepository
+	geopip2Domain    *GeoIP2Domain
 	validationDomain *ValidationDomain
-	mitmDomain *MitmDomain
+	mitmDomain       *MitmDomain
 }
 
 // NewSessionDomain returns an initalized SessionDomain struct.
@@ -82,7 +83,7 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 
 	session := d.parseSession(request, ip)
 
-	if (session.IP == nil || session.Port == 0) {
+	if session.IP == nil || session.Port == 0 {
 		return nil, errors.New("IP or port not set")
 	}
 
@@ -108,15 +109,15 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 	}
 
 	// Validate session on CREATE and UPDATE
-	if (requestType == SessionCreate || requestType == SessionUpdate) {
+	if requestType == SessionCreate || requestType == SessionUpdate {
 		if !d.validateSession(session) {
 			return nil, ErrSessionRejected
 		}
 	}
 
 	// Open a game session on the selected MITM server if requested
-	if ((requestType == SessionCreate && session.HostMethod == entity.HostMethodMITM) ||
-		 requestType == SessionUpdate && session.HostMethod == entity.HostMethodMITM && savedSession.HostMethod != entity.HostMethodMITM) {
+	if (requestType == SessionCreate && session.HostMethod == entity.HostMethodMITM) ||
+		requestType == SessionUpdate && session.HostMethod == entity.HostMethodMITM && savedSession.HostMethod != entity.HostMethodMITM {
 		mitm, err := d.mitmDomain.OpenSession(request.MITMServer)
 		if err != nil {
 			return nil, fmt.Errorf("Can't open")
@@ -126,7 +127,7 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 	}
 
 	// Persist session changes
-	switch (requestType) {
+	switch requestType {
 	case SessionCreate:
 		if session.Country, err = d.geopip2Domain.GetCountryCodeForIP(session.IP); err != nil {
 			return nil, fmt.Errorf("Can't find country for given IP %s: %w", session.IP, err)
@@ -165,12 +166,12 @@ func (d *SessionDomain) PurgeOld() error {
 	if err := d.sessionRepo.PurgeOld(d.getDeadline()); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
 // parseSession turns a request into a session information that can be compared to a persisted session
-func (d *SessionDomain) parseSession(req* AddSessionRequest, ip net.IP) *entity.Session {
+func (d *SessionDomain) parseSession(req *AddSessionRequest, ip net.IP) *entity.Session {
 	var hostMethod entity.HostMethod = entity.HostMethodUnknown
 
 	if req.ForceMITM {
@@ -178,20 +179,20 @@ func (d *SessionDomain) parseSession(req* AddSessionRequest, ip net.IP) *entity.
 	}
 
 	return &entity.Session{
-		Username: req.Username,
-		GameName: req.GameName,
-		GameCRC: strings.ToUpper(req.GameCRC),
-		CoreName: req.CoreName,
-		CoreVersion: req.CoreVersion,
-		SubsystemName: req.SubsystemName,
-		RetroArchVersion: req.RetroArchVersion,
-		Frontend: req.Frontend,
-		IP: ip,
-		Port: req.Port,
-		MitmAddress: "",
-		MitmPort: 0,
-		HostMethod: hostMethod,
-		HasPassword: req.HasPassword,
+		Username:            req.Username,
+		GameName:            req.GameName,
+		GameCRC:             strings.ToUpper(req.GameCRC),
+		CoreName:            req.CoreName,
+		CoreVersion:         req.CoreVersion,
+		SubsystemName:       req.SubsystemName,
+		RetroArchVersion:    req.RetroArchVersion,
+		Frontend:            req.Frontend,
+		IP:                  ip,
+		Port:                req.Port,
+		MitmAddress:         "",
+		MitmPort:            0,
+		HostMethod:          hostMethod,
+		HasPassword:         req.HasPassword,
 		HasSpectatePassword: req.HasSpectatePassword,
 	}
 }
@@ -205,7 +206,7 @@ func (d *SessionDomain) validateSession(s *entity.Session) bool {
 		len(s.RetroArchVersion) > 32 ||
 		len(s.SubsystemName) > 255 ||
 		len(s.Frontend) > 255 {
-			return false;
+		return false
 	}
 
 	if !d.validationDomain.ValidateString(s.Username) ||
@@ -213,13 +214,11 @@ func (d *SessionDomain) validateSession(s *entity.Session) bool {
 		!d.validationDomain.ValidateString(s.Frontend) ||
 		!d.validationDomain.ValidateString(s.SubsystemName) ||
 		!d.validationDomain.ValidateString(s.RetroArchVersion) {
-			return false;
+		return false
 	}
 
 	return true
 }
-
-
 
 func (d *SessionDomain) getDeadline() time.Time {
 	return time.Now().Add(-SessionDeadline * time.Second)

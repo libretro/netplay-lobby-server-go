@@ -1,10 +1,10 @@
 package entity
 
 import (
-	"time"
-	"strings"
 	"net"
+	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -147,6 +147,6 @@ func TestSessionPrintForRetroarch(t *testing.T) {
 	// to see if it has the format of "%s=%s"
 	for _, line := range lines[:len(lines)-1] {
 		entries := strings.Split(line, "=")
-		assert.Equal(t, 2, len(entries)) 
+		assert.Equal(t, 2, len(entries))
 	}
 }
