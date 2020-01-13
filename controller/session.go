@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net"
 	"net/http"
-	"strings"
 
 	"github.com/labstack/echo/v4"
 
@@ -16,23 +15,6 @@ import (
 // SessionController handles all session related request
 type SessionController struct {
 	sessionDomain domain.SessionDomain
-}
-
-// AddSessionRequest defines the request for the AddSession request.
-type AddSessionRequest struct {
-	Username string `form:"username"`
-	CoreName string `form:"core_name"`
-	CoreVersion string `form:"core_version"`
-	GameName string `form:"game_name"`
-	GameCRC  string `form:"game_crc"`
-	Port uint16 `form:"port"`
-	MITMServer string `form:"mitm_server"`
-	HasPassword bool  `form:"has_password"` // 1/0
-	HasSpectatePassword bool `form:"has_spectate_password"`
-	ForceMITM bool `form:"force_mitm"`
-	RetroarchVersion string `form:"retroarch_version"`
-	Frontend string `form:"frontend"`
-	SubsystemName string  `form:"subsystem_name"`
 }
 
 // ListSessionsResponse is a custom DTO for backward compatability.
@@ -91,33 +73,17 @@ func (c *SessionController) List(ctx echo.Context) error {
 func (c *SessionController) Add(ctx echo.Context) error {
 	logger := ctx.Logger()
 	var err error
+	var session *entity.Session
 
-	var req AddSessionRequest
+	var req domain.AddSessionRequest
 	if err := ctx.Bind(&req); err != nil {
 		logger.Errorf("Can't parse incomming session: %w", err)
 		return echo.NewHTTPError(http.StatusBadRequest);
 	}
 
-	// TODO MITM server logic
-	session := &entity.Session{
-		Username: req.Username,
-		GameName: req.GameName,
-		GameCRC: strings.ToUpper(req.GameCRC),
-		CoreName: req.CoreName,
-		CoreVersion: req.CoreVersion,
-		SubsystemName: req.SubsystemName,
-		RetroArchVersion: req.RetroarchVersion,
-		Frontend: req.Frontend,
-		IP: net.ParseIP(ctx.RealIP()),
-		Port: req.Port,
-		MitmAddress: "", // TODO
-		MitmPort: 0, // TODO
-		HostMethod: entity.HostMethodUnknown,
-		HasPassword: req.HasPassword,
-		HasSpectatePassword: req.HasSpectatePassword,
-	}
+	ip := net.ParseIP(ctx.RealIP())
 
-	if session, err = c.sessionDomain.Add(session); err != nil {
+	if session, err = c.sessionDomain.Add(&req, ip); err != nil {
 		logger.Errorf("Won't add session: %w", err)
 
 		if errors.Is(err, domain.ErrSessionRejected) {

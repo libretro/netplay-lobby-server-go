@@ -78,8 +78,7 @@ func (s *Session) CalculateContentHash() {
 	shake.Write([]byte(s.Frontend))
 	shake.Write([]byte(s.IP))
 	shake.Write([]byte(strconv.FormatUint(uint64(s.Port), 10)))
-	shake.Write([]byte(s.MitmAddress))
-	shake.Write([]byte(strconv.FormatUint(uint64(s.MitmPort), 10)))
+	shake.Write([]byte(strconv.FormatUint(uint64(s.HostMethod), 10)))
 	shake.Write([]byte(strconv.FormatBool(s.HasPassword)))
 	shake.Write([]byte(strconv.FormatBool(s.HasSpectatePassword)))
 

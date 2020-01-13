@@ -32,6 +32,6 @@ func NewMitmDomain(servers []MitmServer) *MitmDomain {
 func (d *MitmDomain) OpenSession(handle string) (*MitmSession, error)  {
 	// TODO and implement a test using the Add function
 	// TODO we need a MITM serve list and need to validate against it
-	// TODO maybe this should be it's own domain logic?
+	// TODO fallback is the first entry in the list
 	return nil, nil
 }

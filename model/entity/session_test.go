@@ -95,7 +95,7 @@ func TestSessionContentHashCreationForTestSession(t *testing.T) {
 	session.CalculateContentHash()
 
 	assert.NotEqual(t, "d89f176c5afab7c6604184c30dbb51b9791940f9a0e9bfd21e0c9f86520fd958", session.ContentHash)
-	assert.Equal(t, "b3da60512ea3bf6991f95f1e8165ef2423ff766c6d4725299599c15f0a1405ec", session.ContentHash)
+	assert.Equal(t, "2163d1d6642d8a0b4c2500ed0cf6d64c288b6649c9770210343890d7a6baef38", session.ContentHash)
 }
 
 func TestSessionIDDoesNotChangeContentHash(t *testing.T) {

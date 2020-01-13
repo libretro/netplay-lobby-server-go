@@ -1,6 +1,5 @@
 package domain
 
-
 import (
 	"net"
 	"errors"
@@ -13,6 +12,25 @@ import (
 
 	"github.com/libretro/netplay-lobby-server-go/model/entity"
 )
+
+var testIP = net.ParseIP("192.168.178.2")
+
+// testRequest and testSession should have the same values for the test below.
+var testRequest = AddSessionRequest{
+	Username: "zelda",
+	CoreName: "bsnes",
+	CoreVersion: "0.2.1",
+	GameName: "supergame",
+	GameCRC: "FFFFFFFF",
+	Port: 55355,
+	MITMServer: "",
+	HasPassword: false,
+	HasSpectatePassword: false,
+	ForceMITM: false,
+	RetroArchVersion: "1.1.1",
+	Frontend: "retro",
+	SubsystemName: "subsub",
+}
 
 var testSession = entity.Session{
 	ID:                  "",
@@ -29,7 +47,7 @@ var testSession = entity.Session{
 	Port:                55355,
 	MitmAddress:         "hostname.com",
 	MitmPort:            0,
-	HostMethod:          entity.HostMethodUPNP,
+	HostMethod:          entity.HostMethodUnknown,
 	HasPassword:         false,
 	HasSpectatePassword: false,
 	CreatedAt:           time.Now().Add(-5 * time.Minute),
@@ -117,18 +135,19 @@ func TestSessionDomainList(t *testing.T) {
 func TestSessionDomainValidateSessionAtCreate(t *testing.T) {
 	sessionDomain, repoMock := setupSessionDomain(t)
 
-	session := testSession
-	comp := session
+	request := testRequest
+	comp := testSession
 	comp.CalculateID()
 	comp.CalculateContentHash()
-	session.GameCRC = "123456789"
+	
+	request.GameCRC = "123456789"
 
 	repoMock.On("GetByID", mock.MatchedBy(
 		func(s string) bool {
         	return s == comp.ID
 		})).Return(nil, nil)
 
-	newSession, err := sessionDomain.Add(&session)
+	newSession, err := sessionDomain.Add(&request, testIP)
 	require.Error(t, err)
 	assert.Nil(t, newSession)
 	assert.True(t, errors.Is(err, ErrSessionRejected))
@@ -137,18 +156,19 @@ func TestSessionDomainValidateSessionAtCreate(t *testing.T) {
 func TestSessionDomainValidateSessionAtUpdate(t *testing.T) {
 	sessionDomain, repoMock := setupSessionDomain(t)
 
-	session := testSession
-	comp := session
+	request := testRequest
+	comp := testSession
 	comp.CalculateID()
 	comp.CalculateContentHash()
-	session.RetroArchVersion = "0123456789ABCDEF0123456789ABCDEF_INVALID"
+	
+	request.RetroArchVersion = "0123456789ABCDEF0123456789ABCDEF_INVALID"
 
 	repoMock.On("GetByID", mock.MatchedBy(
 		func(s string) bool {
         	return s == comp.ID
 		})).Return(&comp, nil)
 
-	newSession, err := sessionDomain.Add(&session)
+	newSession, err := sessionDomain.Add(&request, testIP)
 	require.Error(t, err)
 	assert.Nil(t, newSession)
 	assert.True(t, errors.Is(err, ErrSessionRejected))
@@ -157,8 +177,8 @@ func TestSessionDomainValidateSessionAtUpdate(t *testing.T) {
 func TestSessionDomainAddSessionTypeCreate(t *testing.T) {
 	sessionDomain, repoMock := setupSessionDomain(t)
 
-	session := testSession
-	comp := session
+	request := testRequest
+	comp := testSession
 	comp.CalculateID()
 	comp.CalculateContentHash()
 
@@ -172,7 +192,7 @@ func TestSessionDomainAddSessionTypeCreate(t *testing.T) {
 			return s.ID == comp.ID && s.ContentHash == comp.ContentHash
 		})).Return(nil)
 
-	newSession, err := sessionDomain.Add(&session)
+	newSession, err := sessionDomain.Add(&request, testIP)
 	require.NoError(t, err)
 	require.NotNil(t, newSession)
 	assert.Equal(t, comp.ID, newSession.ID)
@@ -182,12 +202,12 @@ func TestSessionDomainAddSessionTypeCreate(t *testing.T) {
 func TestSessionDomainAddSessionTypeUpdate(t *testing.T) {
 	sessionDomain, repoMock := setupSessionDomain(t)
 
-	session := testSession
-	comp := session
+	request := testRequest
+	comp := testSession
 	comp.CalculateID()
 	comp.CalculateContentHash()
 
-	session.GameCRC = "88888888"
+	request.GameCRC = "88888888"
 
 	repoMock.On("GetByID", mock.MatchedBy(
 		func(s string) bool {
@@ -199,7 +219,7 @@ func TestSessionDomainAddSessionTypeUpdate(t *testing.T) {
 			return s.ID == comp.ID && s.ContentHash != comp.ContentHash
 		})).Return(nil)
 
-	newSession, err := sessionDomain.Add(&session)
+	newSession, err := sessionDomain.Add(&request, testIP)
 	require.NoError(t, err)
 	require.NotNil(t, newSession)
 	assert.Equal(t, comp.ID, newSession.ID)
@@ -209,8 +229,8 @@ func TestSessionDomainAddSessionTypeUpdate(t *testing.T) {
 func TestSessionDomainAddSessionTypeTouch(t *testing.T) {
 	sessionDomain, repoMock := setupSessionDomain(t)
 
-	session := testSession
-	comp := session
+	request := testRequest
+	comp := testSession
 	comp.CalculateID()
 	comp.CalculateContentHash()
 
@@ -224,7 +244,7 @@ func TestSessionDomainAddSessionTypeTouch(t *testing.T) {
 			return id == comp.ID
 		})).Return(nil)
 
-	newSession, err := sessionDomain.Add(&session)
+	newSession, err := sessionDomain.Add(&request, testIP)
 	require.NoError(t, err)
 	require.NotNil(t, newSession)
 	assert.Equal(t, comp.ID, newSession.ID)
@@ -234,13 +254,13 @@ func TestSessionDomainAddSessionTypeTouch(t *testing.T) {
 func TestSessionDomainAddSessionTypeUpdateRateLimit(t *testing.T) {
 	sessionDomain, repoMock := setupSessionDomain(t)
 
-	session := testSession
-	comp := session
+	request := testRequest
+	comp := testSession
 	comp.UpdatedAt = time.Now().Add(-5 * time.Second)
 	comp.CalculateID()
 	comp.CalculateContentHash()
 
-	session.GameCRC = "88888888"
+	request.GameCRC = "88888888"
 
 	repoMock.On("GetByID", mock.MatchedBy(
 		func(s string) bool {
@@ -252,7 +272,7 @@ func TestSessionDomainAddSessionTypeUpdateRateLimit(t *testing.T) {
 			return s.ID == comp.ID && s.ContentHash != comp.ContentHash
 		})).Return(nil)
 
-	newSession, err := sessionDomain.Add(&session)
+	newSession, err := sessionDomain.Add(&request, testIP)
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, ErrRateLimited))
 	assert.Nil(t, newSession)
@@ -261,8 +281,8 @@ func TestSessionDomainAddSessionTypeUpdateRateLimit(t *testing.T) {
 func TestSessionDomainAddSessionTypeTouchRateLimit(t *testing.T) {
 	sessionDomain, repoMock := setupSessionDomain(t)
 
-	session := testSession
-	comp := session
+	request := testRequest
+	comp := testSession
 	comp.UpdatedAt = time.Now().Add(-5 * time.Second)
 	comp.CalculateID()
 	comp.CalculateContentHash()
@@ -277,7 +297,7 @@ func TestSessionDomainAddSessionTypeTouchRateLimit(t *testing.T) {
 			return id == comp.ID
 		})).Return(nil)
 
-	newSession, err := sessionDomain.Add(&session)
+	newSession, err := sessionDomain.Add(&request, testIP)
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, ErrRateLimited))
 	assert.Nil(t, newSession)
