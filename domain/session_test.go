@@ -27,7 +27,7 @@ var testSession = entity.Session{
 	Frontend:            "retro",
 	IP:                  net.ParseIP("192.168.178.2"),
 	Port:                55355,
-	MitmIP:              net.ParseIP("0.0.0.0"),
+	MitmAddress:         "hostname.com",
 	MitmPort:            0,
 	HostMethod:          entity.HostMethodUPNP,
 	HasPassword:         false,
@@ -76,7 +76,7 @@ func setupSessionDomain(t *testing.T) (*SessionDomain, *SessionRepositoryMock) {
 
 	geoip2Domain := setupGeoip2Domain(t)
 
-	sessionDomain := NewSessionDomain(&repoMock, geoip2Domain, validationDomain)
+	sessionDomain := NewSessionDomain(&repoMock, geoip2Domain, validationDomain, &MitmDomain{})
 	require.NoError(t, err)
 
 	return sessionDomain, &repoMock
@@ -282,3 +282,5 @@ func TestSessionDomainAddSessionTypeTouchRateLimit(t *testing.T) {
 	assert.True(t, errors.Is(err, ErrRateLimited))
 	assert.Nil(t, newSession)
 }
+
+// TODO test MITM Codepath

@@ -40,7 +40,7 @@ type Session struct {
 	Frontend            string     `json:"frontend"`
 	IP                  net.IP     `json:"ip" gorm:"not null"`
 	Port                uint16     `json:"port"`
-	MitmIP              net.IP     `json:"mitm_ip"`
+	MitmAddress         string     `json:"mitm_ip"`
 	MitmPort            uint16     `json:"mitm_port"`
 	HostMethod          HostMethod `json:"host_method"`
 	HasPassword         bool       `json:"has_password"`
@@ -78,7 +78,7 @@ func (s *Session) CalculateContentHash() {
 	shake.Write([]byte(s.Frontend))
 	shake.Write([]byte(s.IP))
 	shake.Write([]byte(strconv.FormatUint(uint64(s.Port), 10)))
-	shake.Write([]byte(s.MitmIP))
+	shake.Write([]byte(s.MitmAddress))
 	shake.Write([]byte(strconv.FormatUint(uint64(s.MitmPort), 10)))
 	shake.Write([]byte(strconv.FormatBool(s.HasPassword)))
 	shake.Write([]byte(strconv.FormatBool(s.HasSpectatePassword)))
@@ -102,7 +102,7 @@ func (s *Session) PrintForRetroarch() string {
 		hasSpectatePassword = 1
 	}
 
-	str += fmt.Sprintf("username=%s\ncore_name=%s\ngame_name=%s\ngame_crc=%s\ncore_version=%s\nip=%s\nport=%d\nhost_method=%d\nhas_password=%d\nhas_spectate_password=%d\nretroarch_version=%s\nfrontend=%s\nsubsystem_name=%s\ncountry=%s\n",
+	str += fmt.Sprintf("username=%s\ncore_name=%s\ngame_name=%s\ngame_crc=%s\ncore_version=%s\nip=%s\nport=%d\nhost_method=%d\nmitm_ip=%s\nmitm_port=%d\nhas_password=%d\nhas_spectate_password=%d\nretroarch_version=%s\nfrontend=%s\nsubsystem_name=%s\ncountry=%s\n",
 		s.Username,
 		s.CoreName,
 		s.GameName,
@@ -111,6 +111,8 @@ func (s *Session) PrintForRetroarch() string {
 		s.IP,
 		s.Port,
 		s.HostMethod,
+		s.MitmAddress,
+		s.MitmPort,
 		hasPassword,
 		hasSpectatePassword,
 		s.RetroArchVersion,

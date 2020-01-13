@@ -3,7 +3,6 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"net"
 	"time"
 
 	"github.com/libretro/netplay-lobby-server-go/model/entity"
@@ -21,12 +20,6 @@ const (
     SessionTouch
 )
 
-// mitmSession represents a relay server session
-type mitmSession struct {
-	IP net.IP
-	Port uint16
-}
-
 // ErrSessionRejected is thrown when a session got rejected by the domain logic. 
 var ErrSessionRejected = errors.New("Session rejected")
 
@@ -43,16 +36,21 @@ type SessionRepository interface {
 	PurgeOld(deadline time.Time) error
 }
 
-// SessionDomain abrsracts the domain logic for netplay session handling.
+// SessionDomain abstracts the domain logic for netplay session handling.
 type SessionDomain struct {
 	sessionRepo SessionRepository
 	geopip2Domain *GeoIP2Domain
 	validationDomain *ValidationDomain
+	mitmDomain *MitmDomain
 }
 
 // NewSessionDomain returns an initalized SessionDomain struct.
-func NewSessionDomain(sessionRepo SessionRepository, geoIP2Domain *GeoIP2Domain, validationDomain *ValidationDomain) *SessionDomain {
-	return &SessionDomain{sessionRepo, geoIP2Domain, validationDomain}
+func NewSessionDomain(
+	sessionRepo SessionRepository,
+	geoIP2Domain *GeoIP2Domain,
+	validationDomain *ValidationDomain,
+	mitmDomain *MitmDomain) *SessionDomain {
+	return &SessionDomain{sessionRepo, geoIP2Domain, validationDomain, mitmDomain}
 }
 
 // Add adds or updates a session, based on the incomming session information.
@@ -97,11 +95,11 @@ func (d *SessionDomain) Add(session *entity.Session) (*entity.Session, error) {
 
 	// Open a game session on the selected MITM server if requested
 	if (requestType == SessionCreate && session.HostMethod == entity.HostMethodMITM) {
-		mitm, err := d.openMITMSession(session)
+		mitm, err := d.mitmDomain.OpenSession(session.MitmAddress)
 		if err != nil {
 			return nil, fmt.Errorf("Can't open")
 		}
-		session.MitmIP = mitm.IP
+		session.MitmAddress = mitm.Path
 		session.MitmPort = mitm.Port
 	}
 
@@ -172,13 +170,7 @@ func (d *SessionDomain) validateSession(s *entity.Session) bool {
 	return true
 }
 
-// openMITMSession opens a new netplay session on the specified MITM server
-func (d *SessionDomain) openMITMSession(s *entity.Session) (*mitmSession, error)  {
-	// TODO and implement a test using the Add function
-	// TODO we need a MITM serve list and need to validate against it
-	// TODO maybe this should be it's own domain logic?
-	return nil, nil
-}
+
 
 func (d *SessionDomain) getDeadline() time.Time {
 	return time.Now().Add(-SessionDeadline * time.Second)

@@ -25,7 +25,7 @@ var testSession = entity.Session{
 	Frontend:            "retro",
 	IP:                  net.ParseIP("127.0.0.1"),
 	Port:                55355,
-	MitmIP:              net.ParseIP("0.0.0.0"),
+	MitmAddress:         "hostname.com",
 	MitmPort:            0,
 	HostMethod:          entity.HostMethodUPNP,
 	HasPassword:         false,
@@ -61,7 +61,7 @@ func TestSessionRepositoryCreateIPNotNull(t *testing.T) {
 	session := testSession
 
 	session.IP = nil
-	session.MitmIP = net.ParseIP("0.0.0.0")
+	session.MitmAddress = "newhost.com"
 	session.CalculateID()
 	session.CalculateContentHash()
 	err := sessionRepository.Create(&session)
@@ -72,7 +72,7 @@ func TestSessionRepositoryCreateMITMNull(t *testing.T) {
 	sessionRepository := setupSessionRepository(t)
 	session := testSession
 
-	session.MitmIP = nil
+	session.MitmAddress = ""
 	session.CalculateID()
 	session.CalculateContentHash()
 	err := sessionRepository.Create(&session)
@@ -157,8 +157,8 @@ func TestSessionRepositoryUpdate(t *testing.T) {
 	err := sessionRepository.Create(&session)
 	require.NoError(t, err, "Can't create session")
 
-	newIP := net.ParseIP("83.12.41.222")
-	session.MitmIP = newIP
+	newIP := "83.12.41.222"
+	session.MitmAddress = newIP
 
 	session.CalculateContentHash()
 	err = sessionRepository.Update(&session)
@@ -168,7 +168,7 @@ func TestSessionRepositoryUpdate(t *testing.T) {
 	require.NoError(t, err, "Can't get session by ID")
 
 	require.NotNil(t, newSession)
-	assert.Equal(t, newSession.MitmIP, newIP)
+	assert.Equal(t, newSession.MitmAddress, newIP)
 }
 
 func TestSessionRepositoryTouch(t *testing.T) {

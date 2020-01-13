@@ -51,6 +51,15 @@ func (c *SessionController) RegisterRoutes(e *echo.Echo) {
 // GET /
 // TODO testme
 func (c *SessionController) Index(ctx echo.Context) error {
+	logger := ctx.Logger()
+
+	_, err := c.sessionDomain.List()
+	if err != nil {
+		logger.Errorf("Can't render session list: %w", err)
+		return echo.NewHTTPError(http.StatusInternalServerError);
+	}
+	// TODO template rendering
+
 	return ctx.String(http.StatusOK, "TODO")
 }
 
@@ -101,7 +110,7 @@ func (c *SessionController) Add(ctx echo.Context) error {
 		Frontend: req.Frontend,
 		IP: net.ParseIP(ctx.RealIP()),
 		Port: req.Port,
-		MitmIP: nil, // TODO
+		MitmAddress: "", // TODO
 		MitmPort: 0, // TODO
 		HostMethod: entity.HostMethodUnknown,
 		HasPassword: req.HasPassword,
