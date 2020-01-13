@@ -2,6 +2,7 @@ package entity
 
 import (
 	"time"
+	"strings"
 	"net"
 	"testing"
 
@@ -31,14 +32,14 @@ var testSession = Session{
 	ContentHash:         "",
 }
 
-func TestIDCreationFoEmptySession(t *testing.T) {
+func TestSessionIDCreationFoEmptySession(t *testing.T) {
 	session := &Session{}
 	session.CalculateID()
 
 	assert.Equal(t, "7e8b1406d903bc9137fb69e769742c8d3e36f1c4fed51a608809b08de9f3e4a0", session.ID)
 }
 
-func TestIDCreationForTestSession(t *testing.T) {
+func TestSessionIDCreationForTestSession(t *testing.T) {
 	session := testSession
 	session.CalculateID()
 
@@ -46,7 +47,7 @@ func TestIDCreationForTestSession(t *testing.T) {
 	assert.Equal(t, "b78a35ff8be6cc104cce6ef1c3ab631621456a475d11d4df9612274285a48843", session.ID)
 }
 
-func TestIDDoesNotChangeID(t *testing.T) {
+func TestSessionIDDoesNotChangeID(t *testing.T) {
 	session := testSession
 	session.CalculateID()
 	oldHash := session.ID
@@ -58,7 +59,7 @@ func TestIDDoesNotChangeID(t *testing.T) {
 	assert.Equal(t, oldHash, newHash)
 }
 
-func TestCreatedAtDoesNotChangeID(t *testing.T) {
+func TestSessionCreatedAtDoesNotChangeID(t *testing.T) {
 	session := testSession
 	session.CalculateID()
 	oldHash := session.ID
@@ -70,7 +71,7 @@ func TestCreatedAtDoesNotChangeID(t *testing.T) {
 	assert.Equal(t, oldHash, newHash)
 }
 
-func TestUpdatedAtDoesNotChangeID(t *testing.T) {
+func TestSessionUpdatedAtDoesNotChangeID(t *testing.T) {
 	session := testSession
 	session.CalculateID()
 	oldHash := session.ID
@@ -82,14 +83,14 @@ func TestUpdatedAtDoesNotChangeID(t *testing.T) {
 	assert.Equal(t, oldHash, newHash)
 }
 
-func TestContentHashCreationFoEmptySession(t *testing.T) {
+func TestSessionContentHashCreationFoEmptySession(t *testing.T) {
 	session := &Session{}
 	session.CalculateContentHash()
 
 	assert.Equal(t, "d89f176c5afab7c6604184c30dbb51b9791940f9a0e9bfd21e0c9f86520fd958", session.ContentHash)
 }
 
-func TestContentHashCreationForTestSession(t *testing.T) {
+func TestSessionContentHashCreationForTestSession(t *testing.T) {
 	session := testSession
 	session.CalculateContentHash()
 
@@ -97,7 +98,7 @@ func TestContentHashCreationForTestSession(t *testing.T) {
 	assert.Equal(t, "b3da60512ea3bf6991f95f1e8165ef2423ff766c6d4725299599c15f0a1405ec", session.ContentHash)
 }
 
-func TestIDDoesNotChangeContentHash(t *testing.T) {
+func TestSessionIDDoesNotChangeContentHash(t *testing.T) {
 	session := testSession
 	session.CalculateID()
 	oldHash := session.ContentHash
@@ -109,7 +110,7 @@ func TestIDDoesNotChangeContentHash(t *testing.T) {
 	assert.Equal(t, oldHash, newHash)
 }
 
-func TestCreatedAtDoesNotChangeContentHash(t *testing.T) {
+func TestSessionCreatedAtDoesNotChangeContentHash(t *testing.T) {
 	session := testSession
 	session.CalculateID()
 	oldHash := session.ContentHash
@@ -121,7 +122,7 @@ func TestCreatedAtDoesNotChangeContentHash(t *testing.T) {
 	assert.Equal(t, oldHash, newHash)
 }
 
-func TestUpdatedAtDoesNotChangeContentHash(t *testing.T) {
+func TestSessionUpdatedAtDoesNotChangeContentHash(t *testing.T) {
 	session := testSession
 	session.CalculateID()
 	oldHash := session.ContentHash
@@ -133,4 +134,19 @@ func TestUpdatedAtDoesNotChangeContentHash(t *testing.T) {
 	assert.Equal(t, oldHash, newHash)
 }
 
-// TODO test PrintForRetroarch()
+func TestSessionPrintForRetroarch(t *testing.T) {
+	session := testSession
+
+	s := session.PrintForRetroarch()
+
+	lines := strings.Split(s, "\n")
+
+	assert.Equal(t, 17, len(lines))
+
+	// Interate through all lines (except last empty line)
+	// to see if it has the format of "%s=%s"
+	for _, line := range lines[:len(lines)-1] {
+		entries := strings.Split(line, "=")
+		assert.Equal(t, 2, len(entries)) 
+	}
+}
