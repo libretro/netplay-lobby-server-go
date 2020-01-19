@@ -132,8 +132,6 @@ func (c *SessionController) Add(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	logger.Infof("Request: %v", req)
-
 	ip := net.ParseIP(ctx.RealIP())
 
 	if session, err = c.sessionDomain.Add(&req, ip); err != nil {
