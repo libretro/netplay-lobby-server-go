@@ -90,7 +90,7 @@ func TestSessionControllerList(t *testing.T) {
 	domainMock := &SessionDomainMock{}
 
 	server := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/list", nil)
 	rec := httptest.NewRecorder()
 	ctx := server.NewContext(req, rec)
 	handler := NewSessionController(domainMock)
@@ -132,7 +132,7 @@ func TestSessionControllerListError(t *testing.T) {
 	domainMock := &SessionDomainMock{}
 
 	e := echo.New()
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req := httptest.NewRequest(http.MethodGet, "/list", nil)
 	rec := httptest.NewRecorder()
 	ctx := e.NewContext(req, rec)
 	handler := NewSessionController(domainMock)
@@ -140,8 +140,6 @@ func TestSessionControllerListError(t *testing.T) {
 	domainMock.On("List").Return(nil, errors.New("test error"))
 
 	handler.List(ctx)
-	assert.Equal(t, http.StatusInternalServerError, rec.Code) // TODO
+	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 	assert.Equal(t, "", rec.Body.String())
 }
-
-// TODO test Add
