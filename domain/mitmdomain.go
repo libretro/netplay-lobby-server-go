@@ -57,7 +57,6 @@ func (d *MitmDomain) OpenSession(handle string) (*MitmSession, error) {
 		return nil, fmt.Errorf("Can't send open command to relay server '%s': %w", address, err)
 	}
 	
-	// Read until EOT
 	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
 	_, err = conn.Read(data)
 	if err != nil {
@@ -75,7 +74,7 @@ func (d *MitmDomain) OpenSession(handle string) (*MitmSession, error) {
 
 		server.Port = uint16(port)
 		return &server, nil
-	} 
+	}
 
 	return nil, fmt.Errorf("Recieved invalid response by relay %s: %X", address, data)
 }
