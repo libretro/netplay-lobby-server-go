@@ -7,6 +7,6 @@ import (
 
 // GetSqliteDB returns a sqlite3 interface using GORM.
 // A filepath of ":memory:" provides a in memory database.
-func GetSqliteDB(filepath string) (*gorm.DB, error) {
-	return gorm.Open("sqlite3", filepath)
+func GetSqliteDB(connection string) (*gorm.DB, error) {
+	return gorm.Open("sqlite3", connection)
 }

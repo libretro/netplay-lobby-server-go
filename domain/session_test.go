@@ -261,7 +261,7 @@ func TestSessionDomainAddSessionTypeUpdateRateLimit(t *testing.T) {
 
 	request := testRequest
 	comp := testSession
-	comp.UpdatedAt = time.Now().Add(-5 * time.Second)
+	comp.UpdatedAt = time.Now().Add(-4 * time.Second)
 	comp.CalculateID()
 	comp.CalculateContentHash()
 
@@ -288,7 +288,7 @@ func TestSessionDomainAddSessionTypeTouchRateLimit(t *testing.T) {
 
 	request := testRequest
 	comp := testSession
-	comp.UpdatedAt = time.Now().Add(-5 * time.Second)
+	comp.UpdatedAt = time.Now().Add(-4 * time.Second)
 	comp.CalculateID()
 	comp.CalculateContentHash()
 

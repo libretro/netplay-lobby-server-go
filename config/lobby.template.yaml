@@ -1,11 +1,20 @@
 server:
-  address: 0.0.0.0/32
-  port: 7777
+  address: 0.0.0.0:7777
+  geolite2path: ./geolite2/GeoLite2-Country.mmdb
+
+database:
+  # mysql, postgres, sqlite
+  type: sqlite
+  # database specific connection string
+  connection: ":memory:"
+
+relay:
+  nyc: "example.relay.com"
 
 blacklist:
   nickname:
     - someRE1.*
     - someRE2.*
-  ip:
+  ips:
    - 1.1.1.1
    - 8.8.8.8

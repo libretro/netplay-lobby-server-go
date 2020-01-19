@@ -2,30 +2,18 @@ package domain
 
 // MitmSession represents a relay server session.
 type MitmSession struct {
-	Path string
+	Address string
 	Port uint16
-}
-
-// MitmServer holds the information of relay server.
-type MitmServer struct {
-	Handle string
-	Name   string
-	Port   uint16
 }
 
 // MitmDomain abstracts the mitm logic for handling netplay relays.
 type MitmDomain struct {
-	server map[string]MitmServer
+	server map[string]string
 }
 
 // NewMitmDomain creates a new MITM domain logic.
-func NewMitmDomain(servers []MitmServer) *MitmDomain {
-	m := make(map[string]MitmServer, len(servers))
-	for _, entry := range servers {
-		m[entry.Handle] = entry
-	}
-
-	return &MitmDomain{m}
+func NewMitmDomain(servers map[string]string) *MitmDomain {
+	return &MitmDomain{servers}
 }
 
 // OpenSession opens a new netplay session on the specified MITM server

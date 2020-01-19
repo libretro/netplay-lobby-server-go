@@ -13,6 +13,9 @@ import (
 // SessionDeadline is lifespan of a session that hasn't recieved any updated in seconds.
 const SessionDeadline = 60
 
+// RateLimit is the maximal rate a client can send an update (every five seconds)
+const RateLimit = 5
+
 // requestType enum
 type requestType int
 
@@ -102,7 +105,7 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 
 	// Ratelimit on UPDATE or TOUCH
 	if requestType == SessionUpdate || requestType == SessionTouch {
-		treshhold := time.Now().Add(-10 * time.Second)
+		treshhold := time.Now().Add(-5 * time.Second)
 		if savedSession.UpdatedAt.After(treshhold) {
 			return nil, ErrRateLimited
 		}
@@ -122,7 +125,7 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 		if err != nil {
 			return nil, fmt.Errorf("Can't open")
 		}
-		session.MitmAddress = mitm.Path
+		session.MitmAddress = mitm.Address
 		session.MitmPort = mitm.Port
 	}
 
