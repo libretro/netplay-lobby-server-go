@@ -177,6 +177,11 @@ func (d *SessionDomain) PurgeOld() error {
 func (d *SessionDomain) parseSession(req *AddSessionRequest, ip net.IP) *entity.Session {
 	var hostMethod entity.HostMethod = entity.HostMethodUnknown
 
+	// Set default username
+	if req.Username == "" {
+		req.Username = "Anonymous"
+	}
+
 	if req.ForceMITM {
 		hostMethod = entity.HostMethodMITM
 	}

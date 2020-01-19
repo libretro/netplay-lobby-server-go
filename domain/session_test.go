@@ -204,6 +204,34 @@ func TestSessionDomainAddSessionTypeCreate(t *testing.T) {
 	assert.Equal(t, comp.ContentHash, newSession.ContentHash)
 }
 
+func TestSessionDomainAddSessionTypeCreateShouldSetDefaultUsername(t *testing.T) {
+	sessionDomain, repoMock := setupSessionDomain(t)
+
+	request := testRequest
+	request.Username = ""
+
+	comp := testSession
+	comp.Username = "Anonymous"
+	comp.CalculateID()
+	comp.CalculateContentHash()
+
+	repoMock.On("GetByID", mock.MatchedBy(
+		func(s string) bool {
+			return s == comp.ID
+		})).Return(nil, nil)
+
+	repoMock.On("Create", mock.MatchedBy(
+		func(s *entity.Session) bool {
+			return s.ID == comp.ID && s.ContentHash == comp.ContentHash
+		})).Return(nil)
+
+	newSession, err := sessionDomain.Add(&request, testIP)
+	require.NoError(t, err)
+	require.NotNil(t, newSession)
+	assert.Equal(t, comp.ID, newSession.ID)
+	assert.Equal(t, comp.ContentHash, newSession.ContentHash)
+}
+
 func TestSessionDomainAddSessionTypeUpdate(t *testing.T) {
 	sessionDomain, repoMock := setupSessionDomain(t)
 

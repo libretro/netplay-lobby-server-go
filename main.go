@@ -6,6 +6,7 @@ import (
     "github.com/labstack/echo/v4"
 	"github.com/jinzhu/gorm"
     "github.com/labstack/echo/v4/middleware"
+    "github.com/labstack/gommon/log"
     "github.com/spf13/viper"
 
     "github.com/libretro/netplay-lobby-server-go/controller"
@@ -17,6 +18,7 @@ import (
 
 func main() {
     server := echo.New()
+    server.Logger.SetLevel(log.INFO)
 
     config, err := readConfig()
     if err != nil {
@@ -38,6 +40,7 @@ func main() {
     // Server setup
     server.Use(middleware.Logger())
     server.Use(middleware.Recover())
+    server.Use(middleware.BodyLimit("128K"))
     
     // Set the routes
     controller.RegisterRoutes(server)

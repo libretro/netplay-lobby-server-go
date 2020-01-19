@@ -36,9 +36,9 @@ func NewSessionController(sessionDomain SessionDomain) *SessionController {
 // RegisterRoutes registers all controller routes at an echo framework instance.
 func (c *SessionController) RegisterRoutes(e *echo.Echo) {
 	e.POST("/add", c.Add)
-	e.POST("/add/", c.Add)
+	e.POST("/add/", c.Add) // Legacy path
 	e.GET("/list", c.List)
-	e.GET("/list/", c.List)
+	e.GET("/list/", c.List) // Legacy path
 	e.GET("/", c.Index)
 }
 
