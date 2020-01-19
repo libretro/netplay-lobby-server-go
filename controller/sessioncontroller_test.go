@@ -143,3 +143,5 @@ func TestSessionControllerListError(t *testing.T) {
 	assert.Equal(t, http.StatusInternalServerError, rec.Code)
 	assert.Equal(t, "", rec.Body.String())
 }
+
+// TODO add a good test for /add

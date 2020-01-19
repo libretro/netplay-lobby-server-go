@@ -336,4 +336,4 @@ func TestSessionDomainAddSessionTypeTouchRateLimit(t *testing.T) {
 	assert.Nil(t, newSession)
 }
 
-// TODO test MITM Codepath
+// TODO add a good test for the MITM codepath by mocking the MITM domain
