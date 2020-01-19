@@ -10,6 +10,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/mock"
 
 	"github.com/libretro/netplay-lobby-server-go/domain"
@@ -19,7 +20,7 @@ import (
 var testSession = entity.Session{
 	ID:                  "",
 	Username:            "zelda",
-	Country:             "EN",
+	Country:             "en",
 	GameName:            "supergame",
 	GameCRC:             "FFFFFFFF",
 	CoreName:            "unes",
@@ -68,7 +69,8 @@ func TestSessionControllerIndex(t *testing.T) {
 	rec := httptest.NewRecorder()
 	ctx := server.NewContext(req, rec)
 	handler := NewSessionController(domainMock)
-	handler.PrerenderTemplates(server, "../web/templates/*.html")
+	err := handler.PrerenderTemplates(server, "../web/templates/*.html")
+	require.NoError(t, err)
 
 	session1 := testSession
 	session1.Username = "Player 1"

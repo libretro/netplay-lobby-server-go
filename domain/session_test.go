@@ -35,7 +35,7 @@ var testRequest = AddSessionRequest{
 var testSession = entity.Session{
 	ID:                  "",
 	Username:            "zelda",
-	Country:             "EN",
+	Country:             "en",
 	GameName:            "supergame",
 	GameCRC:             "FFFFFFFF",
 	CoreName:            "bsnes",

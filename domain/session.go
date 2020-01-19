@@ -123,7 +123,7 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 		requestType == SessionUpdate && session.HostMethod == entity.HostMethodMITM && savedSession.HostMethod != entity.HostMethodMITM {
 		mitm, err := d.mitmDomain.OpenSession(request.MITMServer)
 		if err != nil {
-			return nil, fmt.Errorf("Can't open")
+			return nil, fmt.Errorf("Can't open mitm session: %w", err)
 		}
 		session.MitmAddress = mitm.Address
 		session.MitmPort = mitm.Port

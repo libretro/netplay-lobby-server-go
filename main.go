@@ -58,8 +58,10 @@ func main() {
     
     // Set the routes and prerender templates
     sessionCotroller.RegisterRoutes(server)
-    sessionCotroller.PrerenderTemplates(server, "/web/templates/*.html")
-
+    if err = sessionCotroller.PrerenderTemplates(server, "./web/templates/*.html"); err != nil {
+        server.Logger.Fatalf("Can't prerender the templates: %v", err)
+    }
+    
     // Start serving
     server.Logger.Fatal(server.Start(config.Server.Address))
 }

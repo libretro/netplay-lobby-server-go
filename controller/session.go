@@ -3,10 +3,12 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"html/template"
 	"io"
 	"net"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/libretro/netplay-lobby-server-go/domain"
@@ -55,11 +57,31 @@ func (c *SessionController) RegisterRoutes(server *echo.Echo) {
 }
 
 // PrerenderTemplates prerenders all templates
-func (c *SessionController) PrerenderTemplates(server *echo.Echo, pathPattern string) {
+func (c *SessionController) PrerenderTemplates(server *echo.Echo, filePattern string) error {
+	templates, err := template.New("").Funcs(
+		template.FuncMap{
+			"prettyBool": func (b bool) string {
+				if b {
+					return "Yes"
+				}
+				return "No"
+			},
+			"prettyDate": func (d time.Time) string {
+				utc, _ := time.LoadLocation("UTC")
+				return d.In(utc).Format(time.RFC822)
+			},
+		},
+	).ParseGlob(filePattern)
+
+	if err != nil {
+		return fmt.Errorf("Can't parse template: %w", err)
+	}
+
 	t := &Template{
-		templates: template.Must(template.ParseGlob(pathPattern)),
+		templates: templates,
 	}
 	server.Renderer = t
+	return nil
 }
 
 // Index handler

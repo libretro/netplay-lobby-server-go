@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"strings"
 	"github.com/oschwald/maxminddb-golang"
 	"net"
 )
@@ -36,7 +37,7 @@ func (d *GeoIP2Domain) GetCountryCodeForIP(ip net.IP) (string, error) {
 		return "", fmt.Errorf("can't lookup country for IP %s: %w", ip, err)
 	}
 
-	return record.Country.ISOCode, nil
+	return strings.ToLower(record.Country.ISOCode), nil
 }
 
 // Close needs to be called to properly close the internal maxminddb database.

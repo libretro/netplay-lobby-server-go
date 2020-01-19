@@ -22,11 +22,11 @@ func TestGeoIP2GetCountryCodeForIP(t *testing.T) {
 	if geoip2Domain != nil {
 		germanCode, err := geoip2Domain.GetCountryCodeForIP(net.ParseIP("46.243.122.48"))
 		assert.NoError(t, err, "Can't get germany country code")
-		assert.Equal(t, "DE", germanCode)
+		assert.Equal(t, "de", germanCode)
 
 		usCode, err := geoip2Domain.GetCountryCodeForIP(net.ParseIP("54.208.114.32"))
 		assert.NoError(t, err, "Can't get US country code")
-		assert.Equal(t, "US", usCode)
+		assert.Equal(t, "us", usCode)
 
 		localCode, err := geoip2Domain.GetCountryCodeForIP(net.ParseIP("127.0.0.1"))
 		assert.NoError(t, err, "Can't get local code")
