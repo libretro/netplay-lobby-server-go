@@ -34,7 +34,7 @@
           </tr></thead><tbody>
           {{ range $key, $session := . }}
             <tr>
-              <td><img height="25" title="{{ $session.Country }}" alt="{{ $session.Country }}" src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/1x1/{{ $session.Country }}.svg"></td>
+              {{ if $session.Country }}<td><img height="25" title="{{ $session.Country }}" alt="{{ $session.Country }}" src="https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.4.3/flags/1x1/{{ $session.Country }}.svg"></td>{{ else }}<td></td>{{ end }}
               <th>{{ $session.Username }}</th>
               <td>{{ $session.GameName }}</td>
               <td>{{ $session.CoreName }} {{ $session.CoreVersion }}</td>

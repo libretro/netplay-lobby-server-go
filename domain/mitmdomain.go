@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net"
+	"strings"
 	"time"
 )
 
@@ -43,9 +44,9 @@ func (d *MitmDomain) OpenSession(handle string) (*MitmSession, error) {
 	if !ok {
 		address = d.getDefaultServer()
 	}
-	server.Address = address
+	server.Address = strings.Split(address, ":")[0]
 
-	conn, err := net.Dial("tcp", "address")
+	conn, err := net.Dial("tcp", address)
 	if err != nil {
 		return nil, fmt.Errorf("Can't open connection to '%s': %w", address, err)
 	}
@@ -63,13 +64,13 @@ func (d *MitmDomain) OpenSession(handle string) (*MitmSession, error) {
 		return nil, fmt.Errorf("Can't read data from relay server '%s': %w", address, err)
 	}
 
-	if res := bytes.Compare(data[0:8], []byte{0x00,0x00,0x46,0x4a,0x00,0x00,0x00}); res == 0 {
-		if err := binary.Read(bytes.NewReader(data[9:12]), binary.BigEndian, &port); err != nil {
+	if res := bytes.Compare(data[0:8], []byte{0x00,0x00,0x46,0x4a,0x00,0x00,0x00,0x04}); res == 0 {
+		if err := binary.Read(bytes.NewReader(data[8:12]), binary.BigEndian, &port); err != nil {
 			return nil, fmt.Errorf("Can't convert data to port number: %w", err)
 		}
 
 		if port > math.MaxUint16 {
-			return nil, fmt.Errorf("Recieved port of invalid size by relay %s: %w", address, err)
+			return nil, fmt.Errorf("Recieved port is not in uint16 range: %d", port)
 		}
 
 		server.Port = uint16(port)
