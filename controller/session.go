@@ -3,6 +3,8 @@ package controller
 
 import (
 	"errors"
+	"html/template"
+	"io"
 	"net"
 	"net/http"
 
@@ -10,6 +12,16 @@ import (
 	"github.com/libretro/netplay-lobby-server-go/domain"
 	"github.com/libretro/netplay-lobby-server-go/model/entity"
 )
+
+// Template abspracts the template rendering.
+type Template struct {
+    templates *template.Template
+}
+
+// Render implements the echo template rendering interface
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+    return t.templates.ExecuteTemplate(w, name, data)
+}
 
 // SessionDomain interface to decouple the controller logic from the domain code.
 type SessionDomain interface {
@@ -34,12 +46,20 @@ func NewSessionController(sessionDomain SessionDomain) *SessionController {
 }
 
 // RegisterRoutes registers all controller routes at an echo framework instance.
-func (c *SessionController) RegisterRoutes(e *echo.Echo) {
-	e.POST("/add", c.Add)
-	e.POST("/add/", c.Add) // Legacy path
-	e.GET("/list", c.List)
-	e.GET("/list/", c.List) // Legacy path
-	e.GET("/", c.Index)
+func (c *SessionController) RegisterRoutes(server *echo.Echo) {
+	server.POST("/add", c.Add)
+	server.POST("/add/", c.Add) // Legacy path
+	server.GET("/list", c.List)
+	server.GET("/list/", c.List) // Legacy path
+	server.GET("/", c.Index)
+}
+
+// PrerenderTemplates prerenders all templates
+func (c *SessionController) PrerenderTemplates(server *echo.Echo, pathPattern string) {
+	t := &Template{
+		templates: template.Must(template.ParseGlob(pathPattern)),
+	}
+	server.Renderer = t
 }
 
 // Index handler
@@ -47,14 +67,13 @@ func (c *SessionController) RegisterRoutes(e *echo.Echo) {
 func (c *SessionController) Index(ctx echo.Context) error {
 	logger := ctx.Logger()
 
-	_, err := c.sessionDomain.List()
+	sessions, err := c.sessionDomain.List()
 	if err != nil {
 		logger.Errorf("Can't render session list: %v", err)
 		return ctx.NoContent(http.StatusInternalServerError)
 	}
-	// TODO template rendering
 
-	return ctx.String(http.StatusOK, "TODO")
+	return ctx.Render(http.StatusOK, "index.html", sessions)
 }
 
 // List handler

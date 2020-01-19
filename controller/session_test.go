@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -14,6 +15,29 @@ import (
 	"github.com/libretro/netplay-lobby-server-go/domain"
 	"github.com/libretro/netplay-lobby-server-go/model/entity"
 )
+
+var testSession = entity.Session{
+	ID:                  "",
+	Username:            "zelda",
+	Country:             "EN",
+	GameName:            "supergame",
+	GameCRC:             "FFFFFFFF",
+	CoreName:            "unes",
+	CoreVersion:         "0.2.1",
+	SubsystemName:       "subsub",
+	RetroArchVersion:    "1.1.1",
+	Frontend:            "retro",
+	IP:                  net.ParseIP("127.0.0.1"),
+	Port:                55355,
+	MitmAddress:         "0.0.0.0",
+	MitmPort:            0,
+	HostMethod:          entity.HostMethodUPNP,
+	HasPassword:         false,
+	HasSpectatePassword: false,
+	CreatedAt:           time.Now(),
+	UpdatedAt:           time.Now(),
+	ContentHash:         "",
+}
 
 type SessionDomainMock struct {
 	mock.Mock
@@ -36,16 +60,37 @@ func (m *SessionDomainMock) PurgeOld() error {
 	return args.Error(0)
 }
 
-// TODO test Index
-
-func TestSessionControllerList(t *testing.T) {
-	// TODO move setup code in setup method
+func TestSessionControllerIndex(t *testing.T) {
 	domainMock := &SessionDomainMock{}
 
-	e := echo.New()
+	server := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	rec := httptest.NewRecorder()
-	ctx := e.NewContext(req, rec)
+	ctx := server.NewContext(req, rec)
+	handler := NewSessionController(domainMock)
+	handler.PrerenderTemplates(server, "../web/templates/*.html")
+
+	session1 := testSession
+	session1.Username = "Player 1"
+	session2 := testSession
+	session2.Username = "Player 2"
+	sessions := []entity.Session{session1, session2}
+	domainMock.On("List").Return(sessions, nil)
+
+	handler.Index(ctx)
+	
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Contains(t, rec.Body.String(), "Player 1")
+	assert.Contains(t, rec.Body.String(), "Player 2")
+}
+
+func TestSessionControllerList(t *testing.T) {
+	domainMock := &SessionDomainMock{}
+
+	server := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	ctx := server.NewContext(req, rec)
 	handler := NewSessionController(domainMock)
 
 	sessions := make([]entity.Session, 1)

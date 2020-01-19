@@ -28,29 +28,29 @@
                     href="https://www.youtube.com/watch?v=n6aF0wNcm7E" role="button">How to Host</a>
             </p>
         </div>
-        {% if entries %}
+        {{ if . }}
           <table class="table"><thead><tr>
           <th></th><th>Nickname</th><th>Game</th><th>Core</th><th>Password?</th><th>Version</th><th>Created</th>
           </tr></thead><tbody>
-          {% for entry in entries %}
+          {{ range $key, $session := . }}
             <tr>
-              <td><img title="{{ entry.country }}" alt="{{ entry.country }}" src="/mymedia/flags/{{ entry.country | lower }}.png"></td>
-              <th>{{ entry.username }}</th>
-              <td>{{ entry.game_name }}</td>
-              <td>{{ entry.core_name }} {{ entry.core_version }}</td>
-              <td>{{ entry.has_password | yesno:"Yes,No" }}</td>
-              {% if entry.retroarch_version %}
-              <td>{{ entry.retroarch_version }}</td>
-              {% else %}
+              <td><img title="{{ $session.Country }}" alt="{{ $session.Country }}" src="/mymedia/flags/{{ $session.Country }}.png"></td>
+              <th>{{ $session.Username }}</th>
+              <td>{{ $session.GameName }}</td>
+              <td>{{ $session.CoreName }} {{ $session.CoreVersion }}</td>
+              <td>{{ $session.HasPassword }}</td>
+              {{ if $session.RetroArchVersion }}
+              <td>{{ $session.RetroArchVersion }}</td>
+              {{ else }}
               <td>n/a</td>
-              {% endif %}
-              <td>{{ entry.created | naturaltime }}</td>
+              {{ end }}
+              <td>{{ $session.CreatedAt }}</td>
             </tr>
-          {% endfor %}
+          {{ end }}
           </tbody></table>
-        {% else %}
+        {{ else }}
           <div class="alert alert-info" role="alert">There are currently no lobbies open.</div>
-        {% endif %}
+        {{ end }}
     </div>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js"></script>

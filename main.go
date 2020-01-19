@@ -56,8 +56,9 @@ func main() {
     server.Use(middleware.Recover())
     server.Use(middleware.BodyLimit("128K"))
     
-    // Set the routes
+    // Set the routes and prerender templates
     sessionCotroller.RegisterRoutes(server)
+    sessionCotroller.PrerenderTemplates(server, "/web/templates/*.html")
 
     // Start serving
     server.Logger.Fatal(server.Start(config.Server.Address))
