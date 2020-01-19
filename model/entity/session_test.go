@@ -100,11 +100,11 @@ func TestSessionContentHashCreationForTestSession(t *testing.T) {
 
 func TestSessionIDDoesNotChangeContentHash(t *testing.T) {
 	session := testSession
-	session.CalculateID()
+	session.CalculateContentHash()
 	oldHash := session.ContentHash
 
 	session.ID = "CHANGED ID"
-	session.CalculateID()
+	session.CalculateContentHash()
 	newHash := session.ContentHash
 
 	assert.Equal(t, oldHash, newHash)
@@ -112,11 +112,11 @@ func TestSessionIDDoesNotChangeContentHash(t *testing.T) {
 
 func TestSessionCreatedAtDoesNotChangeContentHash(t *testing.T) {
 	session := testSession
-	session.CalculateID()
+	session.CalculateContentHash()
 	oldHash := session.ContentHash
 
 	session.CreatedAt = time.Now()
-	session.CalculateID()
+	session.CalculateContentHash()
 	newHash := session.ContentHash
 
 	assert.Equal(t, oldHash, newHash)
@@ -124,14 +124,26 @@ func TestSessionCreatedAtDoesNotChangeContentHash(t *testing.T) {
 
 func TestSessionUpdatedAtDoesNotChangeContentHash(t *testing.T) {
 	session := testSession
-	session.CalculateID()
+	session.CalculateContentHash()
 	oldHash := session.ContentHash
 
 	session.UpdatedAt = time.Now()
-	session.CalculateID()
+	session.CalculateContentHash()
 	newHash := session.ContentHash
 
 	assert.Equal(t, oldHash, newHash)
+}
+
+func TestSessionHostMethodChangesContentHash(t *testing.T) {
+	session := testSession
+	session.CalculateContentHash()
+	oldHash := session.ContentHash
+
+	session.HostMethod = HostMethodManual
+	session.CalculateContentHash()
+	newHash := session.ContentHash
+
+	assert.NotEqual(t, oldHash, newHash)
 }
 
 func TestSessionPrintForRetroarch(t *testing.T) {

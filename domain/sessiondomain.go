@@ -83,6 +83,7 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 	var err error
 	var savedSession *entity.Session
 	var requestType requestType = SessionCreate
+	var mitmUpdate bool = false
 
 	session := d.parseSession(request, ip)
 
@@ -92,14 +93,27 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 
 	// Decide if this is an CREATE, UPDATE or TOUCH operation
 	session.CalculateID()
+	session.CalculateContentHash()
 	if savedSession, err = d.sessionRepo.GetByID(session.ID); err != nil {
 		return nil, fmt.Errorf("Can't get saved session: %w", err)
 	}
-	session.CalculateContentHash()
 	if savedSession != nil {
 		requestType = SessionTouch
 		if savedSession.ContentHash != session.ContentHash {
 			requestType = SessionUpdate
+		}
+	}
+
+	if requestType == SessionUpdate {
+		if request.ForceMITM == false && savedSession.HostMethod == entity.HostMethodMITM {
+			session.MitmAddress = ""
+			session.MitmPort = 0
+		} else if request.ForceMITM == true && savedSession.HostMethod != entity.HostMethodMITM  {
+			mitmUpdate = true
+		} else if request.ForceMITM == true && savedSession.MitmAddress != "" {
+			if d.mitmDomain.IsNewServerhandle(request.MITMServer, savedSession.MitmAddress) {
+				mitmUpdate = true
+			}
 		}
 	}
 
@@ -120,7 +134,7 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 
 	// Open a game session on the selected MITM server if requested
 	if (requestType == SessionCreate && session.HostMethod == entity.HostMethodMITM) ||
-		requestType == SessionUpdate && session.HostMethod == entity.HostMethodMITM && savedSession.HostMethod != entity.HostMethodMITM {
+		requestType == SessionUpdate && mitmUpdate == true {
 		mitm, err := d.mitmDomain.OpenSession(request.MITMServer)
 		if err != nil {
 			return nil, fmt.Errorf("Can't open mitm session: %w", err)
@@ -141,6 +155,9 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 		}
 	case SessionUpdate:
 		session.Country = savedSession.Country
+		session.ID = savedSession.ID
+		session.CreatedAt = savedSession.CreatedAt
+		session.CalculateContentHash()
 
 		if err = d.sessionRepo.Update(session); err != nil {
 			return nil, fmt.Errorf("Can't update old session: %w", err)

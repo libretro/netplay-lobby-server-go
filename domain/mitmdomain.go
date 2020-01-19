@@ -79,3 +79,12 @@ func (d *MitmDomain) OpenSession(handle string) (*MitmSession, error) {
 
 	return nil, fmt.Errorf("Recieved invalid response by relay %s: %X", address, data)
 }
+
+// IsNewServerhandle compares if a given server handle is the same as the saved handle server address.
+func (d *MitmDomain) IsNewServerhandle(handle string, server string) bool {
+	address, ok := d.server[handle]
+	if ok && strings.Split(address, ":")[0] == server {
+		return false
+	}
+	return true
+}
