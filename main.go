@@ -35,7 +35,7 @@ func main() {
 
     sessionDomain, err := initDomain(db, config)
     if err != nil {
-        server.Logger.Fatalf("Can't initialize controller: %v", err)
+        server.Logger.Fatalf("Can't initialize domain logic: %v", err)
     }
 
     sessionCotroller := controller.NewSessionController(sessionDomain)
