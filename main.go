@@ -2,6 +2,7 @@ package main
 
 import (
     "fmt"
+	"time"
 
     "github.com/labstack/echo/v4"
 	"github.com/jinzhu/gorm"
@@ -32,10 +33,23 @@ func main() {
     }
     db = db.AutoMigrate(&entity.Session{})
 
-    controller, err := initController(db, config)
+    sessionDomain, err := initDomain(db, config)
     if err != nil {
         server.Logger.Fatalf("Can't initialize controller: %v", err)
     }
+
+    sessionCotroller := controller.NewSessionController(sessionDomain)
+
+    // Start the cleanup job to purge old sessions
+    go func() {
+        for true {
+            err := sessionDomain.PurgeOld()
+            if err != nil {
+                server.Logger.Fatalf("Can't purge old sessions: %v", err)
+            }
+            time.Sleep(2 * time.Minute)
+        }
+    }()
 
     // Server setup
     server.Use(middleware.Logger())
@@ -43,8 +57,8 @@ func main() {
     server.Use(middleware.BodyLimit("128K"))
     
     // Set the routes
-    controller.RegisterRoutes(server)
-    
+    sessionCotroller.RegisterRoutes(server)
+
     // Start serving
     server.Logger.Fatal(server.Start(config.Server.Address))
 }
@@ -79,7 +93,7 @@ func initDatabase(databaseType string, connectionString string) (*gorm.DB, error
     return nil, fmt.Errorf("Unknown database type in configuration: %s", databaseType)
 }
 
-func initController(db *gorm.DB, config *Config) (*controller.SessionController, error) {
+func initDomain(db *gorm.DB, config *Config) (*domain.SessionDomain, error) {
     repo := repository.NewSessionRepository(db)
     geo2Domain, err := domain.NewGeoIP2Domain(config.Server.GeoLite2Path)
     if err != nil {
@@ -90,7 +104,7 @@ func initController(db *gorm.DB, config *Config) (*controller.SessionController,
         return nil, fmt.Errorf("Can't intialize validation domain: %w", err)
     }
     mitmDomain := domain.NewMitmDomain(config.Relay)
-    sessionDOmain := domain.NewSessionDomain(repo, geo2Domain, validationDomain, mitmDomain)
+    sessionDomain := domain.NewSessionDomain(repo, geo2Domain, validationDomain, mitmDomain)
 
-    return controller.NewSessionController(sessionDOmain), nil
+    return sessionDomain, nil
 }
