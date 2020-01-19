@@ -8,11 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var testCoreWhitelist = []string{
-	"snes",
-	"bsnes",
-}
-
 var testStringBlacklist = []string{
 	".*badWord.*",
 	"^prefixTest.*$",
@@ -25,37 +20,28 @@ var testIPBlacklist = []string{
 }
 
 func TestValidationDomainValidCreation(t *testing.T) {
-	_, err := NewValidationDomain(testCoreWhitelist, testStringBlacklist, testIPBlacklist)
+	_, err := NewValidationDomain(testStringBlacklist, testIPBlacklist)
 	require.NoError(t, err)
 }
 
 func TestValidationDomainInvalidIP(t *testing.T) {
-	_, err := NewValidationDomain(testCoreWhitelist, testStringBlacklist, []string{"256.123.12.3"})
+	_, err := NewValidationDomain(testStringBlacklist, []string{"256.123.12.3"})
 	require.Error(t, err)
 
-	_, err = NewValidationDomain(testCoreWhitelist, testStringBlacklist, []string{"2001:db8:0:8d3:0:8a2ef:70:7344"})
+	_, err = NewValidationDomain(testStringBlacklist, []string{"2001:db8:0:8d3:0:8a2ef:70:7344"})
 	require.Error(t, err)
 }
 
 func TestValidationDomainRegexpShouldNotCompile(t *testing.T) {
-	_, err := NewValidationDomain(testCoreWhitelist, []string{"["}, testIPBlacklist)
+	_, err := NewValidationDomain([]string{"["}, testIPBlacklist)
 	require.Error(t, err)
 
-	_, err = NewValidationDomain(testCoreWhitelist, []string{"[0-9]++"}, testIPBlacklist)
+	_, err = NewValidationDomain([]string{"[0-9]++"}, testIPBlacklist)
 	require.Error(t, err)
 }
 
-func TestValidationDomainValidateCore(t *testing.T) {
-	validationDomain, err := NewValidationDomain(testCoreWhitelist, testStringBlacklist, testIPBlacklist)
-	require.NoError(t, err)
-
-	assert.True(t, validationDomain.ValidateString("bsnes"))
-	assert.False(t, validationDomain.ValidateCore("dolphin"))
-	assert.False(t, validationDomain.ValidateCore("zsnes"))
-
-}
 func TestValidationDomainValidateString(t *testing.T) {
-	validationDomain, err := NewValidationDomain(testCoreWhitelist, testStringBlacklist, testIPBlacklist)
+	validationDomain, err := NewValidationDomain(testStringBlacklist, testIPBlacklist)
 	require.NoError(t, err)
 
 	assert.False(t, validationDomain.ValidateString("non ascii ä"))
@@ -69,7 +55,7 @@ func TestValidationDomainValidateString(t *testing.T) {
 }
 
 func TestValidationDomainValidateIP(t *testing.T) {
-	validationDomain, err := NewValidationDomain(testCoreWhitelist, testStringBlacklist, testIPBlacklist)
+	validationDomain, err := NewValidationDomain(testStringBlacklist, testIPBlacklist)
 	require.NoError(t, err)
 
 	assert.True(t, validationDomain.ValdateIP(net.ParseIP("192.168.178.2")))

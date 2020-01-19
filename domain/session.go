@@ -210,6 +210,7 @@ func (d *SessionDomain) validateSession(s *entity.Session) bool {
 	}
 
 	if !d.validationDomain.ValidateString(s.Username) ||
+		!d.validationDomain.ValidateString(s.CoreName) ||
 		!d.validationDomain.ValidateString(s.CoreVersion) ||
 		!d.validationDomain.ValidateString(s.Frontend) ||
 		!d.validationDomain.ValidateString(s.SubsystemName) ||

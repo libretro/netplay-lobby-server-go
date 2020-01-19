@@ -9,18 +9,12 @@ import (
 
 // ValidationDomain provides the domain logic for session validation
 type ValidationDomain struct {
-	coreWhistelist  map[string]bool
 	stringBlacklist []regexp.Regexp
 	ipBlacklist     []net.IP
 }
 
 // NewValidationDomain creates a new initalized Validation domain logic struct.
-func NewValidationDomain(coreWhielist []string, stringBlacklist []string, ipBlacklist []string) (*ValidationDomain, error) {
-	cw := make(map[string]bool, len(coreWhielist))
-	for _, entry := range coreWhielist {
-		cw[entry] = true
-	}
-
+func NewValidationDomain(stringBlacklist []string, ipBlacklist []string) (*ValidationDomain, error) {
 	ub := make([]regexp.Regexp, 0, len(stringBlacklist))
 	for _, entry := range stringBlacklist {
 		exp, err := regexp.Compile(entry)
@@ -39,13 +33,7 @@ func NewValidationDomain(coreWhielist []string, stringBlacklist []string, ipBlac
 		ib = append(ib, ip)
 	}
 
-	return &ValidationDomain{cw, ub, ib}, nil
-}
-
-// ValidateCore validates a string against a core whitelist. Validation uses a map for more efficient comparison.
-func (d *ValidationDomain) ValidateCore(corename string) bool {
-	_, found := d.coreWhistelist[corename]
-	return found
+	return &ValidationDomain{ub, ib}, nil
 }
 
 // ValidateString validates a string against a regexp based blacklist and other rulesets. The validation has linear complexity.

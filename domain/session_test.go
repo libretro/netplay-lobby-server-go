@@ -94,7 +94,7 @@ func (m *SessionRepositoryMock) PurgeOld(deadline time.Time) error {
 func setupSessionDomain(t *testing.T) (*SessionDomain, *SessionRepositoryMock) {
 	repoMock := SessionRepositoryMock{}
 
-	validationDomain, err := NewValidationDomain(testCoreWhitelist, testStringBlacklist, testIPBlacklist)
+	validationDomain, err := NewValidationDomain(testStringBlacklist, testIPBlacklist)
 	require.NoError(t, err)
 
 	geoip2Domain := setupGeoip2Domain(t)
