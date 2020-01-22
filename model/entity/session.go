@@ -40,6 +40,7 @@ type Session struct {
 	Frontend            string     `json:"frontend"`
 	IP                  net.IP     `json:"ip" gorm:"not null"`
 	Port                uint16     `json:"port"`
+	MitmHandle          string     `json:"-"`
 	MitmAddress         string     `json:"mitm_ip"`
 	MitmPort            uint16     `json:"mitm_port"`
 	HostMethod          HostMethod `json:"host_method"`
@@ -79,6 +80,7 @@ func (s *Session) CalculateContentHash() {
 	shake.Write([]byte(s.IP))
 	shake.Write([]byte(strconv.FormatUint(uint64(s.Port), 10)))
 	shake.Write([]byte(strconv.FormatUint(uint64(s.HostMethod), 10)))
+	shake.Write([]byte(s.MitmHandle))
 	shake.Write([]byte(strconv.FormatBool(s.HasPassword)))
 	shake.Write([]byte(strconv.FormatBool(s.HasSpectatePassword)))
 

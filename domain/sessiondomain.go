@@ -111,7 +111,7 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 		} else if request.ForceMITM == true && savedSession.HostMethod != entity.HostMethodMITM  {
 			mitmUpdate = true
 		} else if request.ForceMITM == true && savedSession.MitmAddress != "" {
-			if d.mitmDomain.IsNewServerhandle(request.MITMServer, savedSession.MitmAddress) {
+			if session.MitmHandle != savedSession.MitmHandle {
 				mitmUpdate = true
 			}
 		}
@@ -135,7 +135,7 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 	// Open a game session on the selected MITM server if requested
 	if (requestType == SessionCreate && session.HostMethod == entity.HostMethodMITM) ||
 		requestType == SessionUpdate && mitmUpdate == true {
-		mitm, err := d.mitmDomain.OpenSession(request.MITMServer)
+		mitm, err := d.mitmDomain.OpenSession(session.MitmHandle)
 		if err != nil {
 			return nil, fmt.Errorf("Can't open mitm session: %w", err)
 		}
@@ -155,7 +155,6 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 		}
 	case SessionUpdate:
 		session.Country = savedSession.Country
-		session.ID = savedSession.ID
 		session.CreatedAt = savedSession.CreatedAt
 		session.CalculateContentHash()
 
@@ -214,6 +213,7 @@ func (d *SessionDomain) parseSession(req *AddSessionRequest, ip net.IP) *entity.
 		Frontend:            req.Frontend,
 		IP:                  ip,
 		Port:                req.Port,
+		MitmHandle:			 req.MITMServer,
 		MitmAddress:         "",
 		MitmPort:            0,
 		HostMethod:          hostMethod,

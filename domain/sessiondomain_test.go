@@ -45,6 +45,7 @@ var testSession = entity.Session{
 	Frontend:            "retro",
 	IP:                  net.ParseIP("192.168.178.2"),
 	Port:                55355,
+	MitmHandle:          "",
 	MitmAddress:         "hostname.com",
 	MitmPort:            0,
 	HostMethod:          entity.HostMethodUnknown,
@@ -335,5 +336,3 @@ func TestSessionDomainAddSessionTypeTouchRateLimit(t *testing.T) {
 	assert.True(t, errors.Is(err, ErrRateLimited))
 	assert.Nil(t, newSession)
 }
-
-// TODO add a good test for the MITM codepath by mocking the MITM domain

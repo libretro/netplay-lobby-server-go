@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"time"
 
@@ -18,8 +19,13 @@ import (
 )
 
 func main() {
+	var verbose = flag.Bool("v", false, "verbose logging")
+	flag.Parse()
+
 	server := echo.New()
-	server.Logger.SetLevel(log.INFO)
+	server.HideBanner = true
+	server.Server.ReadTimeout = 5 * time.Second
+	server.Server.WriteTimeout = 5 * time.Second
 
 	config, err := readConfig()
 	if err != nil {
@@ -32,6 +38,12 @@ func main() {
 		server.Logger.Fatalf("Can't initialize database: %v", err)
 	}
 	db = db.AutoMigrate(&entity.Session{})
+
+	if *verbose {
+		server.Logger.SetLevel(log.INFO)
+	} else {
+		server.Logger.SetLevel(log.WARN)
+	}
 
 	sessionDomain, err := initDomain(db, config)
 	if err != nil {
@@ -54,7 +66,7 @@ func main() {
 	// Server setup
 	server.Use(middleware.Logger())
 	server.Use(middleware.Recover())
-	server.Use(middleware.BodyLimit("128K"))
+	server.Use(middleware.BodyLimit("64K"))
 
 	// Set the routes and prerender templates
 	sessionCotroller.RegisterRoutes(server)

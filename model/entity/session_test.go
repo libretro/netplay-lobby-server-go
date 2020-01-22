@@ -22,6 +22,7 @@ var testSession = Session{
 	Frontend:            "retro",
 	IP:                  net.ParseIP("127.0.0.1"),
 	Port:                55355,
+	MitmHandle:          "",
 	MitmAddress:         "0.0.0.0",
 	MitmPort:            0,
 	HostMethod:          HostMethodUPNP,
