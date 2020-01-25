@@ -37,7 +37,7 @@ var testSession = entity.Session{
 
 func setupSessionRepository(t *testing.T) *SessionRepository {
 	db, err := model.GetSqliteDB(":memory:")
-	db = db.LogMode(true)
+	//db = db.LogMode(true)
 	if err != nil {
 		t.Fatalf("Can't open sqlite3 db: %v", err)
 	}
