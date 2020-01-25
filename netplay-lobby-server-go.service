@@ -1,0 +1,15 @@
+[Unit]
+Description=RetroArch lobby server
+After=network.target
+
+[Service]
+ExecStart=/home/lobby/netplay-lobby-server-go/netplay-lobby-server-go -v
+KillMode=process
+Restart=always
+RestartSec=5
+Type=simple
+User=lobby
+Group=lobby
+
+[Install]
+WantedBy=multi-user.target
