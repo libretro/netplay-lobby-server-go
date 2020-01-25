@@ -12,6 +12,7 @@ type Config struct {
 type ServerConfig struct {
 	Address      string
 	GeoLite2Path string
+	TemplatePath string
 }
 
 // DatabaseConfig holds the database config.
