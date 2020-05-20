@@ -11,6 +11,7 @@ import (
 
 var testSession = Session{
 	ID:                  "",
+	RoomID:              0,
 	Username:            "zelda",
 	Country:             "EN",
 	GameName:            "supergame",
@@ -154,7 +155,7 @@ func TestSessionPrintForRetroarch(t *testing.T) {
 
 	lines := strings.Split(s, "\n")
 
-	assert.Equal(t, 17, len(lines))
+	assert.Equal(t, 18, len(lines))
 
 	// Interate through all lines (except last empty line)
 	// to see if it has the format of "%s=%s"

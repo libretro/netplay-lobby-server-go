@@ -29,6 +29,7 @@ const (
 type Session struct {
 	ID                  string     `json:"-" gorm:"primary_key;size:64"`
 	ContentHash         string     `json:"-" gorm:"size:64"`
+	RoomID              int32      `json:"id" gorm:"AUTO_INCREMENT;not null"`
 	Username            string     `json:"username"`
 	Country             string     `json:"country" gorm:"size:2"`
 	GameName            string     `json:"game_name"`
@@ -103,7 +104,8 @@ func (s *Session) PrintForRetroarch() string {
 		hasSpectatePassword = 1
 	}
 
-	str += fmt.Sprintf("username=%s\ncore_name=%s\ngame_name=%s\ngame_crc=%s\ncore_version=%s\nip=%s\nport=%d\nhost_method=%d\nmitm_ip=%s\nmitm_port=%d\nhas_password=%d\nhas_spectate_password=%d\nretroarch_version=%s\nfrontend=%s\nsubsystem_name=%s\ncountry=%s\n",
+	str += fmt.Sprintf("id=%d\nusername=%s\ncore_name=%s\ngame_name=%s\ngame_crc=%s\ncore_version=%s\nip=%s\nport=%d\nhost_method=%d\nmitm_ip=%s\nmitm_port=%d\nhas_password=%d\nhas_spectate_password=%d\nretroarch_version=%s\nfrontend=%s\nsubsystem_name=%s\ncountry=%s\n",
+		s.RoomID,
 		s.Username,
 		s.CoreName,
 		s.GameName,

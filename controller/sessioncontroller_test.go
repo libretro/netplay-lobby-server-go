@@ -10,8 +10,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/libretro/netplay-lobby-server-go/domain"
 	"github.com/libretro/netplay-lobby-server-go/model/entity"
@@ -19,6 +19,7 @@ import (
 
 var testSession = entity.Session{
 	ID:                  "",
+	RoomID:              0,
 	Username:            "zelda",
 	Country:             "en",
 	GameName:            "supergame",
@@ -80,7 +81,7 @@ func TestSessionControllerIndex(t *testing.T) {
 	domainMock.On("List").Return(sessions, nil)
 
 	handler.Index(ctx)
-	
+
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.Contains(t, rec.Body.String(), "Player 1")
 	assert.Contains(t, rec.Body.String(), "Player 2")
@@ -99,6 +100,7 @@ func TestSessionControllerList(t *testing.T) {
 	expectedResultBody := `[
   {
     "fields": {
+      "id": 0,
       "username": "",
       "country": "",
       "game_name": "",

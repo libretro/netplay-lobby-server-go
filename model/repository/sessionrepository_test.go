@@ -14,6 +14,7 @@ import (
 
 var testSession = entity.Session{
 	ID:                  "",
+	RoomID:              0,
 	Username:            "zelda",
 	Country:             "EN",
 	GameName:            "supergame",
@@ -115,12 +116,14 @@ func TestSessionRepositoryGetAll(t *testing.T) {
 
 	session.CalculateID()
 	session.CalculateContentHash()
+	session.RoomID = 0
 	err := sessionRepository.Create(&session)
 	require.NoError(t, err, "Can't create session")
 
 	session.Username = "aladin"
 	session.CalculateID()
 	session.CalculateContentHash()
+	session.RoomID = 0
 	err = sessionRepository.Create(&session)
 	require.NoError(t, err, "Can't create session")
 
@@ -128,6 +131,7 @@ func TestSessionRepositoryGetAll(t *testing.T) {
 	session.UpdatedAt = time.Now().Add(-2 * time.Minute)
 	session.CalculateID()
 	session.CalculateContentHash()
+	session.RoomID = 0
 	err = sessionRepository.Create(&session)
 	require.NoError(t, err, "Can't create session")
 
@@ -204,12 +208,14 @@ func TestSessionRepositoryPurgeOld(t *testing.T) {
 
 	session.CalculateID()
 	session.CalculateContentHash()
+	session.RoomID = 0
 	err := sessionRepository.Create(&session)
 	require.NoError(t, err, "Can't create session")
 
 	session.Username = "aladin"
 	session.CalculateID()
 	session.CalculateContentHash()
+	session.RoomID = 0
 	err = sessionRepository.Create(&session)
 	require.NoError(t, err, "Can't create session")
 
@@ -217,6 +223,7 @@ func TestSessionRepositoryPurgeOld(t *testing.T) {
 	session.UpdatedAt = time.Now().Add(-2 * time.Minute)
 	session.CalculateID()
 	session.CalculateContentHash()
+	session.RoomID = 0
 	err = sessionRepository.Create(&session)
 	require.NoError(t, err, "Can't create session")
 

@@ -34,6 +34,7 @@ var testRequest = AddSessionRequest{
 
 var testSession = entity.Session{
 	ID:                  "",
+	RoomID:              100,
 	Username:            "zelda",
 	Country:             "en",
 	GameName:            "supergame",
