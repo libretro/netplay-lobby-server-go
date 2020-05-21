@@ -53,6 +53,7 @@ var ErrRateLimited = errors.New("Rate limit reached")
 type SessionRepository interface {
 	Create(s *entity.Session) error
 	GetByID(id string) (*entity.Session, error)
+	GetByRoomID(roomID int32) (*entity.Session, error)
 	GetAll(deadline time.Time) ([]entity.Session, error)
 	Update(s *entity.Session) error
 	Touch(id string) error
@@ -108,7 +109,7 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 		if request.ForceMITM == false && savedSession.HostMethod == entity.HostMethodMITM {
 			session.MitmAddress = ""
 			session.MitmPort = 0
-		} else if request.ForceMITM == true && savedSession.HostMethod != entity.HostMethodMITM  {
+		} else if request.ForceMITM == true && savedSession.HostMethod != entity.HostMethodMITM {
 			mitmUpdate = true
 		} else if request.ForceMITM == true && savedSession.MitmAddress != "" {
 			if session.MitmHandle != savedSession.MitmHandle {
@@ -170,6 +171,16 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 	return session, nil
 }
 
+// Get returns the session with the given RoomID
+func (d *SessionDomain) Get(roomID int32) (*entity.Session, error) {
+	session, err := d.sessionRepo.GetByRoomID(roomID)
+	if err != nil {
+		return nil, err
+	}
+
+	return session, nil
+}
+
 // List returns a list of all sessions that are currently beeing hosted
 func (d *SessionDomain) List() ([]entity.Session, error) {
 	sessions, err := d.sessionRepo.GetAll(d.getDeadline())
@@ -213,7 +224,7 @@ func (d *SessionDomain) parseSession(req *AddSessionRequest, ip net.IP) *entity.
 		Frontend:            req.Frontend,
 		IP:                  ip,
 		Port:                req.Port,
-		MitmHandle:			 req.MITMServer,
+		MitmHandle:          req.MITMServer,
 		MitmAddress:         "",
 		MitmPort:            0,
 		HostMethod:          hostMethod,

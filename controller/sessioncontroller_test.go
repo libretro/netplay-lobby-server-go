@@ -36,8 +36,8 @@ var testSession = entity.Session{
 	HostMethod:          entity.HostMethodUPNP,
 	HasPassword:         false,
 	HasSpectatePassword: false,
-	CreatedAt:           time.Now(),
-	UpdatedAt:           time.Now(),
+	CreatedAt:           time.Date(2010, 9, 12, 11, 33, 05, 0, time.UTC),
+	UpdatedAt:           time.Date(2010, 9, 12, 11, 33, 05, 0, time.UTC),
 	ContentHash:         "",
 }
 
@@ -47,6 +47,12 @@ type SessionDomainMock struct {
 
 func (m *SessionDomainMock) Add(request *domain.AddSessionRequest, ip net.IP) (*entity.Session, error) {
 	args := m.Called(request, ip)
+	session, _ := args.Get(0).(*entity.Session)
+	return session, args.Error(1)
+}
+
+func (m *SessionDomainMock) Get(roomID int32) (*entity.Session, error) {
+	args := m.Called(roomID)
 	session, _ := args.Get(0).(*entity.Session)
 	return session, args.Error(1)
 }
@@ -85,6 +91,50 @@ func TestSessionControllerIndex(t *testing.T) {
 	assert.Equal(t, http.StatusOK, rec.Code)
 	assert.Contains(t, rec.Body.String(), "Player 1")
 	assert.Contains(t, rec.Body.String(), "Player 2")
+}
+
+func TestSessionControllerGet(t *testing.T) {
+	domainMock := &SessionDomainMock{}
+
+	server := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	ctx := server.NewContext(req, rec)
+	ctx.SetPath("/:roomID")
+	ctx.SetParamNames("roomID")
+	ctx.SetParamValues("100")
+	handler := NewSessionController(domainMock)
+
+	session := testSession
+	expectedResultBody := `{
+  "fields": {
+    "id": 0,
+    "username": "zelda",
+    "country": "en",
+    "game_name": "supergame",
+    "game_crc": "FFFFFFFF",
+    "core_name": "unes",
+    "core_version": "0.2.1",
+    "subsystem_name": "subsub",
+    "retroarch_version": "1.1.1",
+    "frontend": "retro",
+    "ip": "127.0.0.1",
+    "port": 55355,
+    "mitm_ip": "0.0.0.0",
+    "mitm_port": 0,
+    "host_method": 2,
+    "has_password": false,
+    "has_spectate_password": false,
+    "created": "2010-09-12T11:33:05Z",
+    "updated": "2010-09-12T11:33:05Z"
+  }
+}
+`
+	domainMock.On("Get", int32(100)).Return(&session, nil)
+
+	handler.Get(ctx)
+	assert.Equal(t, http.StatusOK, rec.Code)
+	assert.Equal(t, expectedResultBody, rec.Body.String())
 }
 
 func TestSessionControllerList(t *testing.T) {

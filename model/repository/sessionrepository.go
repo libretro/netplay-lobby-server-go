@@ -46,6 +46,19 @@ func (r *SessionRepository) GetByID(id string) (*entity.Session, error) {
 	return &s, nil
 }
 
+// GetByRoomID returns the session with the given RoomID. Returns nil if session can't be found.
+func (r *SessionRepository) GetByRoomID(id int32) (*entity.Session, error) {
+	var s entity.Session
+	if err := r.db.Where("room_id = ?", id).First(&s).Error; err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("can't query session with RoomID %d: %w", id, err)
+	}
+
+	return &s, nil
+}
+
 // Create creates a new session.
 func (r *SessionRepository) Create(s *entity.Session) error {
 	if err := r.db.Create(s).Error; err != nil {

@@ -23,13 +23,12 @@ const (
 )
 
 // TODO remove "fixed" field from retroarch frontend code
-// TODO remove "ID" field from retroarch frontent code
 
 // Session is the database presentation of a netplay session.
 type Session struct {
 	ID                  string     `json:"-" gorm:"primary_key;size:64"`
 	ContentHash         string     `json:"-" gorm:"size:64"`
-	RoomID              int32      `json:"id" gorm:"AUTO_INCREMENT;not null"`
+	RoomID              int32      `json:"id" gorm:"AUTO_INCREMENT;unique_index"`
 	Username            string     `json:"username"`
 	Country             string     `json:"country" gorm:"size:2"`
 	GameName            string     `json:"game_name"`

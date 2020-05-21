@@ -1,6 +1,5 @@
 package controller
 
-
 import (
 	"errors"
 	"fmt"
@@ -8,6 +7,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -17,23 +17,24 @@ import (
 
 // Template abspracts the template rendering.
 type Template struct {
-    templates *template.Template
+	templates *template.Template
 }
 
 // Render implements the echo template rendering interface
 func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-    return t.templates.ExecuteTemplate(w, name, data)
+	return t.templates.ExecuteTemplate(w, name, data)
 }
 
 // SessionDomain interface to decouple the controller logic from the domain code.
 type SessionDomain interface {
 	Add(request *domain.AddSessionRequest, ip net.IP) (*entity.Session, error)
+	Get(roomID int32) (*entity.Session, error)
 	List() ([]entity.Session, error)
 	PurgeOld() error
 }
 
 // ListSessionsResponse is a custom DTO for backward compatability.
-type ListSessionsResponse struct {
+type SessionsResponse struct {
 	Fields entity.Session `json:"fields"`
 }
 
@@ -54,19 +55,20 @@ func (c *SessionController) RegisterRoutes(server *echo.Echo) {
 	server.GET("/list", c.List)
 	server.GET("/list/", c.List) // Legacy path
 	server.GET("/", c.Index)
+	server.GET("/:roomID", c.Get)
 }
 
 // PrerenderTemplates prerenders all templates
 func (c *SessionController) PrerenderTemplates(server *echo.Echo, filePattern string) error {
 	templates, err := template.New("").Funcs(
 		template.FuncMap{
-			"prettyBool": func (b bool) string {
+			"prettyBool": func(b bool) string {
 				if b {
 					return "Yes"
 				}
 				return "No"
 			},
-			"prettyDate": func (d time.Time) string {
+			"prettyDate": func(d time.Time) string {
 				utc, _ := time.LoadLocation("UTC")
 				return d.In(utc).Format(time.RFC822)
 			},
@@ -98,8 +100,32 @@ func (c *SessionController) Index(ctx echo.Context) error {
 	return ctx.Render(http.StatusOK, "index.html", sessions)
 }
 
+// Get handler
+// GET /:roomID
+func (c *SessionController) Get(ctx echo.Context) error {
+	logger := ctx.Logger()
+
+	roomIDString := ctx.Param("roomID")
+	roomID, err := strconv.ParseInt(roomIDString, 10, 32)
+	if err != nil {
+		logger.Errorf("Can't get session by roomID. The RoomID wasn't a valid int32: %v", err)
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	session, err := c.sessionDomain.Get(int32(roomID))
+	if err != nil {
+		logger.Errorf("Can't render session list: %v", err)
+		return ctx.NoContent(http.StatusInternalServerError)
+	}
+
+	// For legacy reasons, we need to put the sessions inside a wrapper object
+	// that has the session accessible under the key "fields"
+	response := SessionsResponse{*session}
+	return ctx.JSONPretty(http.StatusOK, response, "  ")
+}
+
 // List handler
-// GET /list
+// GET /
 func (c *SessionController) List(ctx echo.Context) error {
 	logger := ctx.Logger()
 
@@ -111,7 +137,7 @@ func (c *SessionController) List(ctx echo.Context) error {
 
 	// For legacy reasons, we need to put the sessions inside a wrapper object
 	// that has the session accessible under the key "fields"
-	response := make([]ListSessionsResponse, len(sessions))
+	response := make([]SessionsResponse, len(sessions))
 	for i, session := range sessions {
 		response[i].Fields = session
 	}

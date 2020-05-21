@@ -82,6 +82,12 @@ func (m *SessionRepositoryMock) GetByID(id string) (*entity.Session, error) {
 	return session, args.Error(1)
 }
 
+func (m *SessionRepositoryMock) GetByRoomID(roomID int32) (*entity.Session, error) {
+	args := m.Called(roomID)
+	session, _ := args.Get(0).(*entity.Session)
+	return session, args.Error(1)
+}
+
 func (m *SessionRepositoryMock) GetAll(deadline time.Time) ([]entity.Session, error) {
 	args := m.Called(deadline)
 	sessions, _ := args.Get(0).([]entity.Session)

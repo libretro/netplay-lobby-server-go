@@ -110,6 +110,37 @@ func TestSessionRepositoryGetByID(t *testing.T) {
 	assert.Nil(t, noSession)
 }
 
+func TestSessionRepositoryGetByRoomID(t *testing.T) {
+	sessionRepository := setupSessionRepository(t)
+	session := testSession
+
+	session.RoomID = 400
+	session.CalculateID()
+	session.CalculateContentHash()
+	err := sessionRepository.Create(&session)
+	require.NoError(t, err, "Can't create session")
+
+	newSession, err := sessionRepository.GetByRoomID(session.RoomID)
+	require.NoError(t, err, "Can't get session by RoomID")
+
+	require.NotNil(t, newSession)
+
+	assert.NotEmpty(t, newSession.ID)
+	assert.NotEmpty(t, newSession.ContentHash)
+
+	assert.NotEqual(t, session.CreatedAt, newSession.CreatedAt)
+	assert.NotEqual(t, session.UpdatedAt, newSession.UpdatedAt)
+
+	// Make sure the rest is the same
+	session.CreatedAt = newSession.CreatedAt
+	session.UpdatedAt = newSession.UpdatedAt
+	assert.Equal(t, &session, newSession)
+
+	noSession, err := sessionRepository.GetByID("should_not_exists")
+	require.NoError(t, err, "Can't get nil session")
+	assert.Nil(t, noSession)
+}
+
 func TestSessionRepositoryGetAll(t *testing.T) {
 	sessionRepository := setupSessionRepository(t)
 	session := testSession
