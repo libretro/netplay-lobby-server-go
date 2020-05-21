@@ -119,8 +119,10 @@ func (c *SessionController) Get(ctx echo.Context) error {
 	}
 
 	// For legacy reasons, we need to put the sessions inside a wrapper object
-	// that has the session accessible under the key "fields"
-	response := SessionsResponse{*session}
+	// that has the session accessible under the key "fields". The old implementation
+	// also returned a list for one entry...
+	response := make([]SessionsResponse, 1)
+	response[0] = SessionsResponse{*session}
 	return ctx.JSONPretty(http.StatusOK, response, "  ")
 }
 

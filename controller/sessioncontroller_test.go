@@ -106,29 +106,31 @@ func TestSessionControllerGet(t *testing.T) {
 	handler := NewSessionController(domainMock)
 
 	session := testSession
-	expectedResultBody := `{
-  "fields": {
-    "id": 0,
-    "username": "zelda",
-    "country": "en",
-    "game_name": "supergame",
-    "game_crc": "FFFFFFFF",
-    "core_name": "unes",
-    "core_version": "0.2.1",
-    "subsystem_name": "subsub",
-    "retroarch_version": "1.1.1",
-    "frontend": "retro",
-    "ip": "127.0.0.1",
-    "port": 55355,
-    "mitm_ip": "0.0.0.0",
-    "mitm_port": 0,
-    "host_method": 2,
-    "has_password": false,
-    "has_spectate_password": false,
-    "created": "2010-09-12T11:33:05Z",
-    "updated": "2010-09-12T11:33:05Z"
+	expectedResultBody := `[
+  {
+    "fields": {
+      "id": 0,
+      "username": "zelda",
+      "country": "en",
+      "game_name": "supergame",
+      "game_crc": "FFFFFFFF",
+      "core_name": "unes",
+      "core_version": "0.2.1",
+      "subsystem_name": "subsub",
+      "retroarch_version": "1.1.1",
+      "frontend": "retro",
+      "ip": "127.0.0.1",
+      "port": 55355,
+      "mitm_ip": "0.0.0.0",
+      "mitm_port": 0,
+      "host_method": 2,
+      "has_password": false,
+      "has_spectate_password": false,
+      "created": "2010-09-12T11:33:05Z",
+      "updated": "2010-09-12T11:33:05Z"
+    }
   }
-}
+]
 `
 	domainMock.On("Get", int32(100)).Return(&session, nil)
 
