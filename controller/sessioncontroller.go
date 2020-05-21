@@ -113,9 +113,9 @@ func (c *SessionController) Get(ctx echo.Context) error {
 	}
 
 	session, err := c.sessionDomain.Get(int32(roomID))
-	if err != nil {
-		logger.Errorf("Can't render session list: %v", err)
-		return ctx.NoContent(http.StatusInternalServerError)
+	if err != nil || session == nil {
+		logger.Errorf("Can't get session: %v", err)
+		return ctx.NoContent(http.StatusNotFound)
 	}
 
 	// For legacy reasons, we need to put the sessions inside a wrapper object
