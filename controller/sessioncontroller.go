@@ -56,6 +56,7 @@ func (c *SessionController) RegisterRoutes(server *echo.Echo) {
 	server.GET("/list/", c.List) // Legacy path
 	server.GET("/", c.Index)
 	server.GET("/:roomID", c.Get)
+	server.GET("/:roomID/", c.Get) // Legacy path
 }
 
 // PrerenderTemplates prerenders all templates
