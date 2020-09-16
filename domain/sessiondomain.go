@@ -240,6 +240,7 @@ func (d *SessionDomain) validateSession(s *entity.Session) bool {
 		len(s.GameName) > 255 ||
 		len(s.GameCRC) != 8 ||
 		len(s.RetroArchVersion) > 32 ||
+		len(s.CoreVersion) > 255 ||
 		len(s.SubsystemName) > 255 ||
 		len(s.Frontend) > 255 {
 		return false
