@@ -30,6 +30,8 @@ var testSession = Session{
 	HostMethod:          HostMethodUPNP,
 	HasPassword:         false,
 	HasSpectatePassword: false,
+	Connectable:         true,
+	IsRetroArch:         true,
 	CreatedAt:           time.Now(),
 	UpdatedAt:           time.Now(),
 	ContentHash:         "",

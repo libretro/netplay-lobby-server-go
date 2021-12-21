@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"net"
@@ -115,11 +116,14 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 		}
 	}
 
-	// Validate session on CREATE and UPDATE
 	if requestType == SessionCreate || requestType == SessionUpdate {
+		// Validate session on CREATE and UPDATE
 		if !d.validateSession(session) {
 			return nil, ErrSessionRejected
 		}
+
+		// Test whether the session is connectable and whether it's RetroArch
+		d.trySessionConnect(session)
 	}
 
 	// Persist session changes
@@ -249,6 +253,54 @@ func (d *SessionDomain) validateSession(s *entity.Session) bool {
 	}
 
 	return true
+}
+
+// trySessionConnect tests the session to see whether it's connectable and whether it's RetroArch
+func (d *SessionDomain) trySessionConnect(s *entity.Session) error {
+{
+	s.Connectable = true
+	s.IsRetroArch = true
+
+	// If it's MITM, assume both connectable and RetroArch
+	if s.HostMethod == entity.HostMethodMITM {
+		return nil
+	}
+
+	address   := fmt.Sprintf("%s:%d", s.IP, s.Port)
+	conn, err := net.DialTimeout("tcp", address, time.Second * 10)
+	if err != nil {
+		s.Connectable = false
+		return err
+	}
+
+	ranp  := []byte{0x52,0x41,0x4E,0x50} // RANP
+	full  := []byte{0x46,0x55,0x4C,0x4C} // FULL
+	poke  := []byte{0x50,0x4F,0x4B,0x45} // POKE
+	magic := make([]byte, 4)
+
+	// Ignore write errors
+	written, err = conn.Write(poke)
+
+	conn.SetReadDeadline(time.Now().Add(time.Second * 10))
+	read, err = conn.Read(magic)
+
+	conn.Close()
+
+	// Assume it's RetroArch on recv error
+	if err != nil || !read {
+		return err
+	}
+
+	// Assume it's not RetroArch on incomplete magic
+	if read != len(magic) {
+		s.IsRetroArch = false
+	}
+
+	if !bytes.Equal(magic, ranp) && !bytes.Equal(magic, full) {
+		s.IsRetroArch = false
+	}
+
+	return nil
 }
 
 func (d *SessionDomain) getDeadline() time.Time {
