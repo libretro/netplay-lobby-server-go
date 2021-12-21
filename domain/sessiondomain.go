@@ -257,7 +257,6 @@ func (d *SessionDomain) validateSession(s *entity.Session) bool {
 
 // trySessionConnect tests the session to see whether it's connectable and whether it's RetroArch
 func (d *SessionDomain) trySessionConnect(s *entity.Session) error {
-{
 	s.Connectable = true
 	s.IsRetroArch = true
 
