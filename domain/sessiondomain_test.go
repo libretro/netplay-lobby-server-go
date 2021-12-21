@@ -54,6 +54,8 @@ var testSession = entity.Session{
 	HostMethod:          entity.HostMethodUnknown,
 	HasPassword:         false,
 	HasSpectatePassword: false,
+	Connectable:         true,
+	IsRetroArch:         true,
 	CreatedAt:           time.Now().Add(-5 * time.Minute),
 	UpdatedAt:           time.Now().Add(-5 * time.Minute),
 	ContentHash:         "",

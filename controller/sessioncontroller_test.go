@@ -37,6 +37,8 @@ var testSession = entity.Session{
 	HostMethod:          entity.HostMethodUPNP,
 	HasPassword:         false,
 	HasSpectatePassword: false,
+	Connectable:         true,
+	IsRetroArch:         true,
 	CreatedAt:           time.Date(2010, 9, 12, 11, 33, 05, 0, time.UTC),
 	UpdatedAt:           time.Date(2010, 9, 12, 11, 33, 05, 0, time.UTC),
 	ContentHash:         "",
@@ -128,6 +130,8 @@ func TestSessionControllerGet(t *testing.T) {
       "host_method": 2,
       "has_password": false,
       "has_spectate_password": false,
+      "connectable": true,
+      "is_retroarch": true,
       "created": "2010-09-12T11:33:05Z",
       "updated": "2010-09-12T11:33:05Z"
     }
@@ -172,6 +176,8 @@ func TestSessionControllerList(t *testing.T) {
       "host_method": 0,
       "has_password": false,
       "has_spectate_password": false,
+      "connectable": true,
+      "is_retroarch": true,
       "created": "0001-01-01T00:00:00Z",
       "updated": "0001-01-01T00:00:00Z"
     }
