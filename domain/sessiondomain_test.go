@@ -30,6 +30,7 @@ var testRequest = AddSessionRequest{
 	RetroArchVersion:    "1.1.1",
 	Frontend:            "retro",
 	SubsystemName:       "subsub",
+	MITMSession:         "",
 }
 
 var testSession = entity.Session{
@@ -47,11 +48,14 @@ var testSession = entity.Session{
 	IP:                  net.ParseIP("192.168.178.2"),
 	Port:                55355,
 	MitmHandle:          "",
-	MitmAddress:         "hostname.com",
+	MitmAddress:         "",
 	MitmPort:            0,
+	MitmSession:         "",
 	HostMethod:          entity.HostMethodUnknown,
 	HasPassword:         false,
 	HasSpectatePassword: false,
+	Connectable:         true,
+	IsRetroArch:         true,
 	CreatedAt:           time.Now().Add(-5 * time.Minute),
 	UpdatedAt:           time.Now().Add(-5 * time.Minute),
 	ContentHash:         "",

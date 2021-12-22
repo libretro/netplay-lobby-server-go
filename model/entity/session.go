@@ -22,8 +22,6 @@ const (
 	HostMethodMITM    = 3
 )
 
-// TODO remove "fixed" field from retroarch frontend code
-
 // Session is the database presentation of a netplay session.
 type Session struct {
 	ID                  string     `json:"-" gorm:"primary_key;size:64"`
@@ -43,9 +41,12 @@ type Session struct {
 	MitmHandle          string     `json:"-"`
 	MitmAddress         string     `json:"mitm_ip"`
 	MitmPort            uint16     `json:"mitm_port"`
+	MitmSession         string     `json:"mitm_session"`
 	HostMethod          HostMethod `json:"host_method"`
 	HasPassword         bool       `json:"has_password"`
 	HasSpectatePassword bool       `json:"has_spectate_password"`
+	Connectable         bool       `json:"connectable"`
+	IsRetroArch         bool       `json:"is_retroarch"`
 	CreatedAt           time.Time  `json:"created"`
 	UpdatedAt           time.Time  `json:"updated" gorm:"index"`
 }
@@ -81,6 +82,7 @@ func (s *Session) CalculateContentHash() {
 	shake.Write([]byte(strconv.FormatUint(uint64(s.Port), 10)))
 	shake.Write([]byte(strconv.FormatUint(uint64(s.HostMethod), 10)))
 	shake.Write([]byte(s.MitmHandle))
+	shake.Write([]byte(s.MitmSession))
 	shake.Write([]byte(strconv.FormatBool(s.HasPassword)))
 	shake.Write([]byte(strconv.FormatBool(s.HasSpectatePassword)))
 
@@ -89,11 +91,12 @@ func (s *Session) CalculateContentHash() {
 	s.ContentHash = hex.EncodeToString(hash)
 }
 
-// PrintForRetroarch prints out the session information in a format, that retroarch is expecting.
+// PrintForRetroarch prints out the session information in a format that retroarch is expecting.
 func (s *Session) PrintForRetroarch() string {
 	var str string
 	var hasPassword = 0
 	var hasSpectatePassword = 0
+	var connectable = 0
 
 	if s.HasPassword {
 		hasPassword = 1
@@ -103,7 +106,11 @@ func (s *Session) PrintForRetroarch() string {
 		hasSpectatePassword = 1
 	}
 
-	str += fmt.Sprintf("id=%d\nusername=%s\ncore_name=%s\ngame_name=%s\ngame_crc=%s\ncore_version=%s\nip=%s\nport=%d\nhost_method=%d\nmitm_ip=%s\nmitm_port=%d\nhas_password=%d\nhas_spectate_password=%d\nretroarch_version=%s\nfrontend=%s\nsubsystem_name=%s\ncountry=%s\n",
+	if s.Connectable {
+		connectable = 1
+	}
+
+	str += fmt.Sprintf("id=%d\nusername=%s\ncore_name=%s\ngame_name=%s\ngame_crc=%s\ncore_version=%s\nip=%s\nport=%d\nhost_method=%d\nmitm_ip=%s\nmitm_port=%d\nhas_password=%d\nhas_spectate_password=%d\nretroarch_version=%s\nfrontend=%s\nsubsystem_name=%s\ncountry=%s\nmitm_session=%s\nconnectable=%d\n",
 		s.RoomID,
 		s.Username,
 		s.CoreName,
@@ -121,6 +128,8 @@ func (s *Session) PrintForRetroarch() string {
 		s.Frontend,
 		s.SubsystemName,
 		strings.ToUpper(s.Country),
+		s.MitmSession,
+		connectable,
 	)
 
 	return str

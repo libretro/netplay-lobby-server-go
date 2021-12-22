@@ -1,17 +1,13 @@
 package domain
 
 import (
-	"bytes"
-	"encoding/binary"
 	"fmt"
-	"math"
-	"net"
 	"strings"
-	"time"
+	"strconv"
 )
 
-// MitmSession represents a relay server session.
-type MitmSession struct {
+// MitmInfo represents a relay server info.
+type MitmInfo struct {
 	Address string
 	Port uint16
 }
@@ -26,64 +22,36 @@ func NewMitmDomain(servers map[string]string) *MitmDomain {
 	return &MitmDomain{servers}
 }
 
-func (d *MitmDomain) getDefaultServer() string {
-	var v string;
-	for _,  v = range d.server {
-		break 
+// GetInfo translates a MITM server handle into an address/port pair.
+func (d *MitmDomain) GetInfo(handle string) *MitmInfo {
+	var server MitmInfo
+
+	address, found := d.server[handle]
+	if !found || address == "" {
+		return nil
 	}
-	return v
+
+	info := strings.Split(address, ":")
+	if len(info) != 2 {
+		return nil
+	}
+
+	addr := info[0]
+	if addr == "" {
+		return nil
+	}
+	port, err := strconv.ParseInt(info[1], 10, 32)
+	if err != nil || port < 1 || port > 65535 {
+		return nil
+	}
+
+	server.Address = addr
+	server.Port = uint16(port)
+
+	return &server
 }
 
-// OpenSession opens a new netplay session on the specified MITM server
-func (d *MitmDomain) OpenSession(handle string) (*MitmSession, error) {
-	var server MitmSession
-	var port uint32 = 0
-	data := make([]byte, 12)
-
-	address, ok := d.server[handle]
-	if !ok {
-		address = d.getDefaultServer()
-	}
-	server.Address = strings.Split(address, ":")[0]
-
-	conn, err := net.Dial("tcp", address)
-	if err != nil {
-		return nil, fmt.Errorf("Can't open connection to '%s': %w", address, err)
-	}
-
-	conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-	_, err = conn.Write([]byte{0x00,0x00,0x46,0x49,0x00,0x00,0x00,0x00})
-	if err != nil {
-		return nil, fmt.Errorf("Can't send open command to relay server '%s': %w", address, err)
-	}
-	
-	conn.SetReadDeadline(time.Now().Add(10 * time.Second))
-	_, err = conn.Read(data)
-	if err != nil {
-		return nil, fmt.Errorf("Can't read data from relay server '%s': %w", address, err)
-	}
-
-	if res := bytes.Compare(data[0:8], []byte{0x00,0x00,0x46,0x4a,0x00,0x00,0x00,0x04}); res == 0 {
-		if err := binary.Read(bytes.NewReader(data[8:12]), binary.BigEndian, &port); err != nil {
-			return nil, fmt.Errorf("Can't convert data to port number: %w", err)
-		}
-
-		if port > math.MaxUint16 {
-			return nil, fmt.Errorf("Recieved port is not in uint16 range: %d", port)
-		}
-
-		server.Port = uint16(port)
-		return &server, nil
-	}
-
-	return nil, fmt.Errorf("Recieved invalid response by relay %s: %X", address, data)
-}
-
-// IsNewServerhandle compares if a given server handle is the same as the saved handle server address.
-func (d *MitmDomain) IsNewServerhandle(handle string, server string) bool {
-	address, ok := d.server[handle]
-	if ok && strings.Split(address, ":")[0] == server {
-		return false
-	}
-	return true
+// PrintForRetroarch prints out the MITM information in a format that retroarch is expecting.
+func (i *MitmInfo) PrintForRetroarch() string {
+	return fmt.Sprintf("tunnel_addr=%s\ntunnel_port=%d\n", i.Address, i.Port)
 }

@@ -16,7 +16,7 @@ var testSession = entity.Session{
 	ID:                  "",
 	RoomID:              0,
 	Username:            "zelda",
-	Country:             "EN",
+	Country:             "en",
 	GameName:            "supergame",
 	GameCRC:             "FFFFFFFF",
 	CoreName:            "unes",
@@ -26,11 +26,14 @@ var testSession = entity.Session{
 	Frontend:            "retro",
 	IP:                  net.ParseIP("127.0.0.1"),
 	Port:                55355,
-	MitmAddress:         "hostname.com",
+	MitmAddress:         "",
 	MitmPort:            0,
+	MitmSession          "",
 	HostMethod:          entity.HostMethodUPNP,
 	HasPassword:         false,
 	HasSpectatePassword: false,
+	Connectable:         true,
+	IsRetroArch:         true,
 	CreatedAt:           time.Now(),
 	UpdatedAt:           time.Now(),
 	ContentHash:         "",
@@ -62,22 +65,10 @@ func TestSessionRepositoryCreateIPNotNull(t *testing.T) {
 	session := testSession
 
 	session.IP = nil
-	session.MitmAddress = "newhost.com"
 	session.CalculateID()
 	session.CalculateContentHash()
 	err := sessionRepository.Create(&session)
 	require.Error(t, err, "Should not be able to create nil value for IP")
-}
-
-func TestSessionRepositoryCreateMITMNull(t *testing.T) {
-	sessionRepository := setupSessionRepository(t)
-	session := testSession
-
-	session.MitmAddress = ""
-	session.CalculateID()
-	session.CalculateContentHash()
-	err := sessionRepository.Create(&session)
-	require.NoError(t, err, "Should be able to create nil value for MITM IP")
 }
 
 func TestSessionRepositoryGetByID(t *testing.T) {

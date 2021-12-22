@@ -30,6 +30,7 @@ type SessionDomain interface {
 	Add(request *domain.AddSessionRequest, ip net.IP) (*entity.Session, error)
 	Get(roomID int32) (*entity.Session, error)
 	List() ([]entity.Session, error)
+	GetTunnel(tunnelName string) *domain.MitmInfo
 	PurgeOld() error
 }
 
@@ -54,6 +55,8 @@ func (c *SessionController) RegisterRoutes(server *echo.Echo) {
 	server.POST("/add/", c.Add) // Legacy path
 	server.GET("/list", c.List)
 	server.GET("/list/", c.List) // Legacy path
+	server.GET("/tunnel", c.Tunnel)
+	server.GET("/tunnel/", c.Tunnel) // Legacy path
 	server.GET("/", c.Index)
 	server.GET("/:roomID", c.Get)
 	server.GET("/:roomID/", c.Get) // Legacy path
@@ -128,7 +131,7 @@ func (c *SessionController) Get(ctx echo.Context) error {
 }
 
 // List handler
-// GET /
+// GET /list
 func (c *SessionController) List(ctx echo.Context) error {
 	logger := ctx.Logger()
 
@@ -149,7 +152,7 @@ func (c *SessionController) List(ctx echo.Context) error {
 }
 
 // Add handler
-// GET /add
+// POST /add
 func (c *SessionController) Add(ctx echo.Context) error {
 	logger := ctx.Logger()
 	var err error
@@ -177,5 +180,26 @@ func (c *SessionController) Add(ctx echo.Context) error {
 
 	result := "status=OK\n"
 	result += session.PrintForRetroarch()
+	return ctx.String(http.StatusOK, result)
+}
+
+// Tunnel handler
+// GET /tunnel
+func (c *SessionController) Tunnel(ctx echo.Context) error {
+	logger := ctx.Logger()
+
+	tunnelName := ctx.QueryParam("name")
+	if tunnelName == "" {
+		return ctx.NoContent(http.StatusBadRequest)
+	}
+
+	tunnel := c.sessionDomain.GetTunnel(tunnelName)
+	if tunnel == nil {
+		logger.Errorf("Can't find tunnel server: '%s'", tunnelName)
+		return ctx.NoContent(http.StatusNotFound)
+	}
+
+	result := "status=OK\n"
+	result += tunnel.PrintForRetroarch()
 	return ctx.String(http.StatusOK, result)
 }

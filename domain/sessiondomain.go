@@ -1,9 +1,11 @@
 package domain
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"strings"
 	"time"
 
@@ -41,6 +43,7 @@ type AddSessionRequest struct {
 	RetroArchVersion    string `form:"retroarch_version"`
 	Frontend            string `form:"frontend"`
 	SubsystemName       string `form:"subsystem_name"`
+	MITMSession         string `form:"mitm_session"`
 }
 
 // ErrSessionRejected is thrown when a session got rejected by the domain logic.
@@ -77,14 +80,13 @@ func NewSessionDomain(
 	return &SessionDomain{sessionRepo, geoIP2Domain, validationDomain, mitmDomain}
 }
 
-// Add adds or updates a session, based on the incomming request from the given IP.
+// Add adds or updates a session, based on the incoming request from the given IP.
 // Returns ErrSessionRejected if session got rejected.
 // Returns ErrRateLimited if rate limit for a session got reached.
 func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Session, error) {
 	var err error
 	var savedSession *entity.Session
 	var requestType requestType = SessionCreate
-	var mitmUpdate bool = false
 
 	session := d.parseSession(request, ip)
 
@@ -92,56 +94,36 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 		return nil, errors.New("IP or port not set")
 	}
 
-	// Decide if this is an CREATE, UPDATE or TOUCH operation
+	// Decide if this is a CREATE, UPDATE or TOUCH operation
 	session.CalculateID()
 	session.CalculateContentHash()
 	if savedSession, err = d.sessionRepo.GetByID(session.ID); err != nil {
 		return nil, fmt.Errorf("Can't get saved session: %w", err)
 	}
 	if savedSession != nil {
-		requestType = SessionTouch
 		if savedSession.ContentHash != session.ContentHash {
 			requestType = SessionUpdate
-		}
-	}
-
-	if requestType == SessionUpdate {
-		if request.ForceMITM == false && savedSession.HostMethod == entity.HostMethodMITM {
-			session.MitmAddress = ""
-			session.MitmPort = 0
-		} else if request.ForceMITM == true && savedSession.HostMethod != entity.HostMethodMITM {
-			mitmUpdate = true
-		} else if request.ForceMITM == true && savedSession.MitmAddress != "" {
-			if session.MitmHandle != savedSession.MitmHandle {
-				mitmUpdate = true
-			}
+		} else {
+			requestType = SessionTouch
 		}
 	}
 
 	// Ratelimit on UPDATE or TOUCH
 	if requestType == SessionUpdate || requestType == SessionTouch {
-		treshhold := time.Now().Add(-5 * time.Second)
-		if savedSession.UpdatedAt.After(treshhold) {
+		threshold := time.Now().Add(-5 * time.Second)
+		if savedSession.UpdatedAt.After(threshold) {
 			return nil, ErrRateLimited
 		}
 	}
 
-	// Validate session on CREATE and UPDATE
 	if requestType == SessionCreate || requestType == SessionUpdate {
+		// Validate session on CREATE and UPDATE
 		if !d.validateSession(session) {
 			return nil, ErrSessionRejected
 		}
-	}
 
-	// Open a game session on the selected MITM server if requested
-	if (requestType == SessionCreate && session.HostMethod == entity.HostMethodMITM) ||
-		requestType == SessionUpdate && mitmUpdate == true {
-		mitm, err := d.mitmDomain.OpenSession(session.MitmHandle)
-		if err != nil {
-			return nil, fmt.Errorf("Can't open mitm session: %w", err)
-		}
-		session.MitmAddress = mitm.Address
-		session.MitmPort = mitm.Port
+		// Test whether the session is connectable and whether it's RetroArch
+		d.trySessionConnect(session)
 	}
 
 	// Persist session changes
@@ -181,7 +163,7 @@ func (d *SessionDomain) Get(roomID int32) (*entity.Session, error) {
 	return session, nil
 }
 
-// List returns a list of all sessions that are currently beeing hosted
+// List returns a list of all sessions that are currently being hosted
 func (d *SessionDomain) List() ([]entity.Session, error) {
 	sessions, err := d.sessionRepo.GetAll(d.getDeadline())
 	if err != nil {
@@ -203,14 +185,27 @@ func (d *SessionDomain) PurgeOld() error {
 // parseSession turns a request into a session information that can be compared to a persisted session
 func (d *SessionDomain) parseSession(req *AddSessionRequest, ip net.IP) *entity.Session {
 	var hostMethod entity.HostMethod = entity.HostMethodUnknown
+	var mitmHandle string = ""
+	var mitmAddress string = ""
+	var mitmPort uint16 = 0
+	var mitmSession string = ""
 
 	// Set default username
 	if req.Username == "" {
 		req.Username = "Anonymous"
 	}
 
-	if req.ForceMITM {
-		hostMethod = entity.HostMethodMITM
+	if req.ForceMITM && req.MITMServer != "" && req.MITMSession != "" {
+		if info := d.GetTunnel(req.MITMServer); info != nil {
+			mitmSessionDecoded, err := url.QueryUnescape(req.MITMSession)
+			if err == nil {
+				hostMethod = entity.HostMethodMITM
+				mitmHandle = req.MITMServer
+				mitmAddress = info.Address
+				mitmPort = info.Port
+				mitmSession = mitmSessionDecoded
+			}
+		}
 	}
 
 	return &entity.Session{
@@ -224,16 +219,17 @@ func (d *SessionDomain) parseSession(req *AddSessionRequest, ip net.IP) *entity.
 		Frontend:            req.Frontend,
 		IP:                  ip,
 		Port:                req.Port,
-		MitmHandle:          req.MITMServer,
-		MitmAddress:         "",
-		MitmPort:            0,
+		MitmHandle:          mitmHandle,
+		MitmAddress:         mitmAddress,
+		MitmPort:            mitmPort,
+		MitmSession:         mitmSession,
 		HostMethod:          hostMethod,
 		HasPassword:         req.HasPassword,
 		HasSpectatePassword: req.HasSpectatePassword,
 	}
 }
 
-// validateSession validaes an incomming session
+// validateSession validates an incoming session
 func (d *SessionDomain) validateSession(s *entity.Session) bool {
 	if len(s.Username) > 32 ||
 		len(s.CoreName) > 255 ||
@@ -242,7 +238,8 @@ func (d *SessionDomain) validateSession(s *entity.Session) bool {
 		len(s.RetroArchVersion) > 32 ||
 		len(s.CoreVersion) > 255 ||
 		len(s.SubsystemName) > 255 ||
-		len(s.Frontend) > 255 {
+		len(s.Frontend) > 255 ||
+		len(s.MitmSession) > 32 {
 		return false
 	}
 
@@ -258,6 +255,58 @@ func (d *SessionDomain) validateSession(s *entity.Session) bool {
 	return true
 }
 
+// trySessionConnect tests the session to see whether it's connectable and whether it's RetroArch
+func (d *SessionDomain) trySessionConnect(s *entity.Session) error {
+	s.Connectable = true
+	s.IsRetroArch = true
+
+	// If it's MITM, assume both connectable and RetroArch
+	if s.HostMethod == entity.HostMethodMITM {
+		return nil
+	}
+
+	address   := fmt.Sprintf("%s:%d", s.IP, s.Port)
+	conn, err := net.DialTimeout("tcp", address, time.Second * 10)
+	if err != nil {
+		s.Connectable = false
+		return err
+	}
+
+	ranp  := []byte{0x52,0x41,0x4E,0x50} // RANP
+	full  := []byte{0x46,0x55,0x4C,0x4C} // FULL
+	poke  := []byte{0x50,0x4F,0x4B,0x45} // POKE
+	magic := make([]byte, 4)
+
+	// Ignore write errors
+	written, err = conn.Write(poke)
+
+	conn.SetReadDeadline(time.Now().Add(time.Second * 10))
+	read, err = conn.Read(magic)
+
+	conn.Close()
+
+	// Assume it's RetroArch on recv error
+	if err != nil || !read {
+		return err
+	}
+
+	// Assume it's not RetroArch on incomplete magic
+	if read != len(magic) {
+		s.IsRetroArch = false
+	}
+
+	if !bytes.Equal(magic, ranp) && !bytes.Equal(magic, full) {
+		s.IsRetroArch = false
+	}
+
+	return nil
+}
+
 func (d *SessionDomain) getDeadline() time.Time {
 	return time.Now().Add(-SessionDeadline * time.Second)
+}
+
+// GetTunnel returns a tunnel's address/port pair.
+func (d *SessionDomain) GetTunnel(tunnelName string) *MitmInfo {
+	return d.mitmDomain.GetInfo(tunnelName)
 }
