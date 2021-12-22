@@ -278,15 +278,15 @@ func (d *SessionDomain) trySessionConnect(s *entity.Session) error {
 	magic := make([]byte, 4)
 
 	// Ignore write errors
-	written, err = conn.Write(poke)
+	conn.Write(poke)
 
 	conn.SetReadDeadline(time.Now().Add(time.Second * 10))
-	read, err = conn.Read(magic)
+	read, err := conn.Read(magic)
 
 	conn.Close()
 
 	// Assume it's RetroArch on recv error
-	if err != nil || !read {
+	if err != nil || read == 0 {
 		return err
 	}
 
