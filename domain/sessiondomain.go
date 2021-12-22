@@ -101,6 +101,12 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 		return nil, fmt.Errorf("Can't get saved session: %w", err)
 	}
 	if savedSession != nil {
+		session.RoomID      = savedSession.RoomID
+		session.Country     = savedSession.Country
+		session.Connectable = savedSession.Connectable
+		session.IsRetroArch = savedSession.IsRetroArch
+		session.CreatedAt   = savedSession.CreatedAt
+		session.UpdatedAt   = savedSession.UpdatedAt
 		if savedSession.ContentHash != session.ContentHash {
 			requestType = SessionUpdate
 		} else {
@@ -137,10 +143,6 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 			return nil, fmt.Errorf("Can't create new session: %w", err)
 		}
 	case SessionUpdate:
-		session.Country = savedSession.Country
-		session.CreatedAt = savedSession.CreatedAt
-		session.CalculateContentHash()
-
 		if err = d.sessionRepo.Update(session); err != nil {
 			return nil, fmt.Errorf("Can't update old session: %w", err)
 		}
