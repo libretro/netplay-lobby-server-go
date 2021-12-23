@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"net/url"
 	"strings"
 	"time"
 
@@ -44,6 +43,8 @@ type AddSessionRequest struct {
 	Frontend            string `form:"frontend"`
 	SubsystemName       string `form:"subsystem_name"`
 	MITMSession         string `form:"mitm_session"`
+	MITMCustomServer    string `form:"mitm_custom_addr"`
+	MITMCustomPort      uint16 `form:"mitm_custom_port"`
 }
 
 // ErrSessionRejected is thrown when a session got rejected by the domain logic.
@@ -127,9 +128,6 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 		if !d.validateSession(session) {
 			return nil, ErrSessionRejected
 		}
-
-		// Test whether the session is connectable and whether it's RetroArch
-		d.trySessionConnect(session)
 	}
 
 	// Persist session changes
@@ -139,14 +137,22 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 			return nil, fmt.Errorf("Can't find country for given IP %s: %w", session.IP, err)
 		}
 
+		d.trySessionConnect(session)
+
 		if err = d.sessionRepo.Create(session); err != nil {
 			return nil, fmt.Errorf("Can't create new session: %w", err)
 		}
 	case SessionUpdate:
+		d.trySessionConnect(session)
+
 		if err = d.sessionRepo.Update(session); err != nil {
 			return nil, fmt.Errorf("Can't update old session: %w", err)
 		}
 	case SessionTouch:
+		if !session.Connectable {
+			d.trySessionConnect(session)
+		}
+
 		if err = d.sessionRepo.Touch(session.ID); err != nil {
 			return nil, fmt.Errorf("Can't touch old session: %w", err)
 		}
@@ -198,14 +204,21 @@ func (d *SessionDomain) parseSession(req *AddSessionRequest, ip net.IP) *entity.
 	}
 
 	if req.ForceMITM && req.MITMServer != "" && req.MITMSession != "" {
-		if info := d.GetTunnel(req.MITMServer); info != nil {
-			mitmSessionDecoded, err := url.QueryUnescape(req.MITMSession)
-			if err == nil {
-				hostMethod = entity.HostMethodMITM
-				mitmHandle = req.MITMServer
+		if req.MITMServer == "custom" {
+			if req.MITMCustomServer != "" && req.MITMCustomPort != 0 {
+				hostMethod  = entity.HostMethodMITM
+				mitmHandle  = req.MITMServer
+				mitmAddress = req.MITMCustomServer
+				mitmPort    = req.MITMCustomPort
+				mitmSession = req.MITMSession
+			}
+		} else {
+			if info := d.GetTunnel(req.MITMServer); info != nil {
+				hostMethod  = entity.HostMethodMITM
+				mitmHandle  = req.MITMServer
 				mitmAddress = info.Address
-				mitmPort = info.Port
-				mitmSession = mitmSessionDecoded
+				mitmPort    = info.Port
+				mitmSession = req.MITMSession
 			}
 		}
 	}
