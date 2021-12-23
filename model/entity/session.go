@@ -110,7 +110,7 @@ func (s *Session) PrintForRetroarch() string {
 		connectable = 1
 	}
 
-	str += fmt.Sprintf("id=%d\nusername=%s\ncore_name=%s\ngame_name=%s\ngame_crc=%s\ncore_version=%s\nip=%s\nport=%d\nhost_method=%d\nmitm_ip=%s\nmitm_port=%d\nhas_password=%d\nhas_spectate_password=%d\nretroarch_version=%s\nfrontend=%s\nsubsystem_name=%s\ncountry=%s\nmitm_session=%s\nconnectable=%d\n",
+	str += fmt.Sprintf("id=%d\nusername=%s\ncore_name=%s\ngame_name=%s\ngame_crc=%s\ncore_version=%s\nip=%s\nport=%d\nhost_method=%d\nhas_password=%d\nhas_spectate_password=%d\nretroarch_version=%s\nfrontend=%s\nsubsystem_name=%s\ncountry=%s\nconnectable=%d\n",
 		s.RoomID,
 		s.Username,
 		s.CoreName,
@@ -120,15 +120,12 @@ func (s *Session) PrintForRetroarch() string {
 		s.IP,
 		s.Port,
 		s.HostMethod,
-		s.MitmAddress,
-		s.MitmPort,
 		hasPassword,
 		hasSpectatePassword,
 		s.RetroArchVersion,
 		s.Frontend,
 		s.SubsystemName,
 		strings.ToUpper(s.Country),
-		s.MitmSession,
 		connectable,
 	)
 

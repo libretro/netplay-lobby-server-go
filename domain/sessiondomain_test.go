@@ -31,6 +31,8 @@ var testRequest = AddSessionRequest{
 	Frontend:            "retro",
 	SubsystemName:       "subsub",
 	MITMSession:         "",
+	MITMCustomServer:    "",
+	MITMCustomPort:      0,
 }
 
 var testSession = entity.Session{
