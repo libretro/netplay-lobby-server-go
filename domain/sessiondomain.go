@@ -151,6 +151,12 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 	case SessionTouch:
 		if !session.Connectable {
 			d.trySessionConnect(session)
+			if session.Connectable {
+				if err = d.sessionRepo.Update(session); err != nil {
+					return nil, fmt.Errorf("Can't update old session: %w", err)
+				}
+				break
+			}
 		}
 
 		if err = d.sessionRepo.Touch(session.ID); err != nil {
