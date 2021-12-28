@@ -287,7 +287,7 @@ func (d *SessionDomain) trySessionConnect(s *entity.Session) error {
 	}
 
 	address   := fmt.Sprintf("%s:%d", s.IP, s.Port)
-	conn, err := net.DialTimeout("tcp", address, time.Second * 10)
+	conn, err := net.DialTimeout("tcp", address, time.Second * 3)
 	if err != nil {
 		s.Connectable = false
 		return err
@@ -299,9 +299,10 @@ func (d *SessionDomain) trySessionConnect(s *entity.Session) error {
 	magic := make([]byte, 4)
 
 	// Ignore write errors
+	conn.SetWriteDeadline(time.Now().Add(time.Second * 3))
 	conn.Write(poke)
 
-	conn.SetReadDeadline(time.Now().Add(time.Second * 10))
+	conn.SetReadDeadline(time.Now().Add(time.Second * 3))
 	read, err := conn.Read(magic)
 
 	conn.Close()
@@ -314,9 +315,7 @@ func (d *SessionDomain) trySessionConnect(s *entity.Session) error {
 	// Assume it's not RetroArch on incomplete magic
 	if read != len(magic) {
 		s.IsRetroArch = false
-	}
-
-	if !bytes.Equal(magic, ranp) && !bytes.Equal(magic, full) {
+	} else if !bytes.Equal(magic, ranp) && !bytes.Equal(magic, full) {
 		s.IsRetroArch = false
 	}
 
