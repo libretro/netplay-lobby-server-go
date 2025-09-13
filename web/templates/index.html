@@ -34,7 +34,15 @@
               <th>{{ $session.Username }}</th>
               <td>{{ $session.GameName }}</td>
               <td>{{ $session.CoreName }} {{ $session.CoreVersion }}</td>
-              <td>{{ $session.PlayerCount }} ({{ $session.SpectatorCount }})</td>
+              {{if ge .PlayerCount 0}}
+                 {{if gt .SpectatorCount 0}}
+                    <td>{{.PlayerCount}} ({{.SpectatorCount}})</td>
+                 {{else}}
+                    <td>{{.PlayerCount}}</td>
+                 {{end}}
+              {{else}}
+                 <td>?</td>
+              {{end}}
               <td>{{ prettyBool $session.HasPassword }}</td>
               {{ if $session.RetroArchVersion }}
               <td>{{ $session.RetroArchVersion }}</td>
