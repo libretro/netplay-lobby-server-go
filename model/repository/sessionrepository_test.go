@@ -28,7 +28,7 @@ var testSession = entity.Session{
 	Port:                55355,
 	MitmAddress:         "",
 	MitmPort:            0,
-	MitmSession          "",
+	MitmSession:         "",
 	HostMethod:          entity.HostMethodUPNP,
 	HasPassword:         false,
 	HasSpectatePassword: false,

@@ -2,7 +2,6 @@ package entity
 
 import (
 	"net"
-	"strings"
 	"testing"
 	"time"
 
