@@ -34,6 +34,8 @@ var testSession = entity.Session{
 	HasSpectatePassword: false,
 	Connectable:         true,
 	IsRetroArch:         true,
+	PlayerCount:         2,
+	SpectatorCount:      1,
 	CreatedAt:           time.Now(),
 	UpdatedAt:           time.Now(),
 	ContentHash:         "",
@@ -211,7 +213,7 @@ func TestSessionRepositoryTouch(t *testing.T) {
 
 	oldTimestamp := oldSession.UpdatedAt
 
-	err = sessionRepository.Touch(oldSession.ID)
+	err = sessionRepository.Touch(oldSession)
 	require.NoError(t, err, "Can't touch session")
 
 	newSession, err := sessionRepository.GetByID(session.ID)
@@ -222,6 +224,34 @@ func TestSessionRepositoryTouch(t *testing.T) {
 	assert.True(t, newSession.UpdatedAt.After(oldTimestamp), "New timestamp is not older after touch")
 
 	assert.Equal(t, oldSession.ContentHash, newSession.ContentHash)
+}
+
+func TestSessionRepositoryTouchPlayerCount(t *testing.T) {
+	sessionRepository := setupSessionRepository(t)
+	session1 := testSession
+	session2 := testSession
+	session2.PlayerCount = 3
+
+	session1.CalculateID()
+	session1.CalculateContentHash()
+	err := sessionRepository.Create(&session1)
+	require.NoError(t, err, "Can't create session")
+
+	prevSession, err := sessionRepository.GetByID(session1.ID)
+	require.NoError(t, err, "Can't get session by ID")
+
+	session2.CalculateID()
+	session2.CalculateContentHash()
+	err = sessionRepository.Touch(&session2)
+	require.NoError(t, err, "Can't touch session")
+
+	newSession, err := sessionRepository.GetByID(session1.ID)
+	require.NoError(t, err, "Can't get session by ID")
+
+	require.NotNil(t, newSession)
+
+	assert.Equal(t, prevSession.ContentHash, newSession.ContentHash)
+	assert.NotEqual(t, prevSession.PlayerCount, newSession.PlayerCount)
 }
 
 func TestSessionRepositoryPurgeOld(t *testing.T) {

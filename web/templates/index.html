@@ -26,7 +26,7 @@
         </div>
         {{ if . }}
           <table class="table"><thead><tr>
-          <th></th><th>Nickname</th><th>Game</th><th>Core</th><th>Private</th><th>Version</th><th>Created</th>
+          <th></th><th>Nickname</th><th>Game</th><th>Core</th><th>Players</th><th>Private</th><th>Version</th><th>Created</th>
           </tr></thead><tbody>
           {{ range $key, $session := . }}
             <tr>
@@ -34,6 +34,7 @@
               <th>{{ $session.Username }}</th>
               <td>{{ $session.GameName }}</td>
               <td>{{ $session.CoreName }} {{ $session.CoreVersion }}</td>
+              <td>{{ $session.PlayerCount }} ({{ $session.SpectatorCount }})</td>
               <td>{{ prettyBool $session.HasPassword }}</td>
               {{ if $session.RetroArchVersion }}
               <td>{{ $session.RetroArchVersion }}</td>

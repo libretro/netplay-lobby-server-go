@@ -47,6 +47,8 @@ type Session struct {
 	HasSpectatePassword bool       `json:"has_spectate_password"`
 	Connectable         bool       `json:"connectable"`
 	IsRetroArch         bool       `json:"is_retroarch"`
+	PlayerCount         int16      `json:"player_count"`
+	SpectatorCount      int16      `json:"spectator_count"`
 	CreatedAt           time.Time  `json:"created"`
 	UpdatedAt           time.Time  `json:"updated" gorm:"index"`
 }

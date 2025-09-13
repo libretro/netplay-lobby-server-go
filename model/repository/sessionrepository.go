@@ -78,9 +78,13 @@ func (r *SessionRepository) Update(s *entity.Session) error {
 }
 
 // Touch updates the UpdatedAt timestamp.
-func (r *SessionRepository) Touch(id string) error {
-	if err := r.db.Model(&entity.Session{}).Where("id = ?", id).Update("updated_at", time.Now()).Error; err != nil {
-		return fmt.Errorf("can't touch session with ID %s: %w", id, err)
+func (r *SessionRepository) Touch(s *entity.Session) error {
+	if err := r.db.Model(&entity.Session{}).
+		Where("id = ?", s.ID).
+		Update("updated_at", time.Now()).
+		Update("player_count", s.PlayerCount).
+		Update("spectator_count", s.SpectatorCount).Error; err != nil {
+		return fmt.Errorf("can't touch session with ID %s: %w", s.ID, err)
 	}
 
 	return nil

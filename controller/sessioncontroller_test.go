@@ -71,6 +71,10 @@ func (m *SessionDomainMock) PurgeOld() error {
 	return args.Error(0)
 }
 
+func (d *SessionDomainMock) GetMitm() *domain.MitmDomain {
+	return nil
+}
+
 func TestSessionControllerIndex(t *testing.T) {
 	domainMock := &SessionDomainMock{}
 
@@ -132,6 +136,8 @@ func TestSessionControllerGet(t *testing.T) {
       "has_spectate_password": false,
       "connectable": true,
       "is_retroarch": true,
+      "player_count": 0,
+      "spectator_count": 0,
       "created": "2010-09-12T11:33:05Z",
       "updated": "2010-09-12T11:33:05Z"
     }
@@ -154,32 +160,35 @@ func TestSessionControllerList(t *testing.T) {
 	ctx := server.NewContext(req, rec)
 	handler := NewSessionController(domainMock)
 
-	sessions := make([]entity.Session, 1)
+	session := testSession
+	sessions := []entity.Session{session}
 	expectedResultBody := `[
   {
     "fields": {
       "id": 0,
-      "username": "",
-      "country": "",
-      "game_name": "",
-      "game_crc": "",
-      "core_name": "",
-      "core_version": "",
-      "subsystem_name": "",
-      "retroarch_version": "",
-      "frontend": "",
-      "ip": "",
-      "port": 0,
+      "username": "zelda",
+      "country": "en",
+      "game_name": "supergame",
+      "game_crc": "FFFFFFFF",
+      "core_name": "unes",
+      "core_version": "0.2.1",
+      "subsystem_name": "subsub",
+      "retroarch_version": "1.1.1",
+      "frontend": "retro",
+      "ip": "127.0.0.1",
+      "port": 55355,
       "mitm_ip": "",
       "mitm_port": 0,
       "mitm_session": "",
-      "host_method": 0,
+      "host_method": 2,
       "has_password": false,
       "has_spectate_password": false,
       "connectable": true,
       "is_retroarch": true,
-      "created": "0001-01-01T00:00:00Z",
-      "updated": "0001-01-01T00:00:00Z"
+      "player_count": 0,
+      "spectator_count": 0,
+      "created": "2010-09-12T11:33:05Z",
+      "updated": "2010-09-12T11:33:05Z"
     }
   }
 ]
