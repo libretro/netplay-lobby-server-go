@@ -16,6 +16,9 @@ import (
 var testIP = net.ParseIP("192.168.178.2")
 
 // testRequest and testSession should have the same values for the test below.
+var playercnt int16 = 2
+var spectacnt int16 = 1
+
 var testRequest = AddSessionRequest{
 	Username:            "zelda",
 	CoreName:            "bsnes",
@@ -33,6 +36,8 @@ var testRequest = AddSessionRequest{
 	MITMSession:         "",
 	MITMCustomServer:    "",
 	MITMCustomPort:      0,
+	PlayerCount:         &playercnt,
+	SpectatorCount:      &spectacnt,
 }
 
 var testSession = entity.Session{
@@ -58,6 +63,8 @@ var testSession = entity.Session{
 	HasSpectatePassword: false,
 	Connectable:         true,
 	IsRetroArch:         true,
+	PlayerCount:         2,
+	SpectatorCount:      1,
 	CreatedAt:           time.Now().Add(-5 * time.Minute),
 	UpdatedAt:           time.Now().Add(-5 * time.Minute),
 	ContentHash:         "",
@@ -77,8 +84,8 @@ func (m *SessionRepositoryMock) Update(s *entity.Session) error {
 	return args.Error(0)
 }
 
-func (m *SessionRepositoryMock) Touch(id string) error {
-	args := m.Called(id)
+func (m *SessionRepositoryMock) Touch(s *entity.Session) error {
+	args := m.Called(s.ID)
 	return args.Error(0)
 }
 

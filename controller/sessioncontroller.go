@@ -30,7 +30,7 @@ type SessionDomain interface {
 	Add(request *domain.AddSessionRequest, ip net.IP) (*entity.Session, error)
 	Get(roomID int32) (*entity.Session, error)
 	List() ([]entity.Session, error)
-	GetTunnel(tunnelName string) *domain.MitmInfo
+	GetMitm() *domain.MitmDomain
 	PurgeOld() error
 }
 
@@ -193,7 +193,7 @@ func (c *SessionController) Tunnel(ctx echo.Context) error {
 		return ctx.NoContent(http.StatusBadRequest)
 	}
 
-	tunnel := c.sessionDomain.GetTunnel(tunnelName)
+	tunnel := c.sessionDomain.GetMitm().GetInfo(tunnelName)
 	if tunnel == nil {
 		logger.Errorf("Can't find tunnel server: '%s'", tunnelName)
 		return ctx.NoContent(http.StatusNotFound)

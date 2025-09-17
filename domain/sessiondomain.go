@@ -45,6 +45,8 @@ type AddSessionRequest struct {
 	MITMSession         string `form:"mitm_session"`
 	MITMCustomServer    string `form:"mitm_custom_addr"`
 	MITMCustomPort      uint16 `form:"mitm_custom_port"`
+	PlayerCount         *int16 `form:"player_count"`
+	SpectatorCount      *int16 `form:"spectator_count"`
 }
 
 // ErrSessionRejected is thrown when a session got rejected by the domain logic.
@@ -60,7 +62,7 @@ type SessionRepository interface {
 	GetByRoomID(roomID int32) (*entity.Session, error)
 	GetAll(deadline time.Time) ([]entity.Session, error)
 	Update(s *entity.Session) error
-	Touch(id string) error
+	Touch(s *entity.Session) error
 	PurgeOld(deadline time.Time) error
 }
 
@@ -159,7 +161,7 @@ func (d *SessionDomain) Add(request *AddSessionRequest, ip net.IP) (*entity.Sess
 			}
 		}
 
-		if err = d.sessionRepo.Touch(session.ID); err != nil {
+		if err = d.sessionRepo.Touch(session); err != nil {
 			return nil, fmt.Errorf("Can't touch old session: %w", err)
 		}
 	}
@@ -219,7 +221,7 @@ func (d *SessionDomain) parseSession(req *AddSessionRequest, ip net.IP) *entity.
 				mitmSession = req.MITMSession
 			}
 		} else {
-			if info := d.GetTunnel(req.MITMServer); info != nil {
+			if info := d.mitmDomain.GetInfo(req.MITMServer); info != nil {
 				hostMethod  = entity.HostMethodMITM
 				mitmHandle  = req.MITMServer
 				mitmAddress = info.Address
@@ -227,6 +229,16 @@ func (d *SessionDomain) parseSession(req *AddSessionRequest, ip net.IP) *entity.
 				mitmSession = req.MITMSession
 			}
 		}
+	}
+
+	// Fill player counts to -1 if not present.
+	plcnt := int16(-1)
+	if req.PlayerCount != nil {
+		plcnt = *req.PlayerCount
+	}
+	spcnt := int16(-1)
+	if req.SpectatorCount != nil {
+		spcnt = *req.SpectatorCount
 	}
 
 	return &entity.Session{
@@ -247,6 +259,8 @@ func (d *SessionDomain) parseSession(req *AddSessionRequest, ip net.IP) *entity.
 		HostMethod:          hostMethod,
 		HasPassword:         req.HasPassword,
 		HasSpectatePassword: req.HasSpectatePassword,
+		PlayerCount:         plcnt,
+		SpectatorCount:      spcnt,
 	}
 }
 
@@ -327,6 +341,6 @@ func (d *SessionDomain) getDeadline() time.Time {
 }
 
 // GetTunnel returns a tunnel's address/port pair.
-func (d *SessionDomain) GetTunnel(tunnelName string) *MitmInfo {
-	return d.mitmDomain.GetInfo(tunnelName)
+func (d *SessionDomain) GetMitm() *MitmDomain {
+	return d.mitmDomain
 }
