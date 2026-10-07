@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/jinzhu/gorm"
@@ -67,6 +69,11 @@ func main() {
 	server.Use(middleware.Logger())
 	server.Use(middleware.Recover())
 	server.Use(middleware.BodyLimit("64K"))
+	server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		Skipper:      skipCORS,
+		AllowOrigins: config.CORS.Origins,
+		AllowMethods: []string{http.MethodGet, http.MethodPost},
+	}))
 
 	// Set the routes and prerender templates
 	sessionCotroller.RegisterRoutes(server)
@@ -77,6 +84,11 @@ func main() {
 
 	// Start serving
 	server.Logger.Fatal(server.Start(config.Server.Address))
+}
+
+func skipCORS(ctx echo.Context) bool {
+	path := strings.TrimSuffix(ctx.Request().URL.Path, "/")
+	return path != "/list" && path != "/add"
 }
 
 func readConfig() (*Config, error) {
